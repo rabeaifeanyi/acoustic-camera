@@ -7,18 +7,13 @@ X, Y, Z = 0.0, 0.005, 1.67 #m
 
 MIN_DISTANCE = 1 #m
 THRESHOLD = 40
-DESIRED_WIDTH = 640
-DESIRED_HEIGHT = 480
-FPS = 20
-SCALE_FACTOR = 1.3
-CAMERA_ON = False
+DESIRED_WIDTH = 160 #640
+DESIRED_HEIGHT = 120 #480
+FPS = 15
+SCALE_FACTOR = 1
 
 DX, DZ = 143, 58 #m
 alphas = calculate_alphas(dx=DX, dz=DZ)
-
-# Configuration for saving results
-CSV = False
-H5 = False
 
 # Update rate configurations for Interface in ms
 ESTIMATION_UPDATE_INTERVAL = 100

@@ -16,15 +16,20 @@ import queue
 
 from .SamplesProcessor import LastInOut # TODO
 
+ac.config.global_caching = "none"
 
 
 class Processor:
-    def __init__(self, device_index, micgeom_path, results_folder, ckpt_path, save_csv, save_h5, z,
+    def __init__(self, device_index, micgeom_path, results_folder, ckpt_path, z,
                  csm_block_size=256, csm_min_queue_size=60, csm_buffer_size=1000):
         """ Processor for the UMA16 Acoustic Camera
         """
         # Device index for the sound device (UMA16 or other microphone array)
         self.device = device_index
+        
+        self.save_csv = False
+        self.save_h5 = False
+        self.log_data = False
         
         # Microphone geometry
         self.mics = ac.MicGeom(from_file=micgeom_path)
@@ -38,6 +43,8 @@ class Processor:
         self.increment = 0.05
         
         self.beamforming_grid = ac.RectGrid(x_min=self.x_min, x_max=self.x_max, y_min=self.y_min, y_max=self.y_max, z=z, increment=self.increment)
+        #self.beamforming_grid_2d = ac.RectGrid(x_min=self.x_min, x_max=self.x_max, y_min=self.y_min, y_max=self.y_max, z_min=self.z_min, z_max=self.z_max, increment=self.increment)
+        
         self.grid_dim = (int((self.x_max - self.x_min) / self.increment + 1), int((self.y_max - self.y_min) / self.increment + 1))
         
         # Default target frequency
@@ -84,15 +91,7 @@ class Processor:
                                     'max_y': [0],
                                     'max_s': [0]}
         
-        # Filename for the results
         self.results_folder = results_folder
-        
-        # Boolean flags for saving the results
-        self.save_csv = save_csv
-        self.save_h5 = save_h5   
-        
-        # For testing purposes only: data of the first channel can be plotted
-        
         self.data_filename, self.results_filename = self._get_result_filenames('model')
         
         self._generators()      
@@ -100,6 +99,7 @@ class Processor:
     def start_model(self):
         """ Start the model processing
         """
+        self._generators()
         print("\nStarting the model.")
         
         # filenames
@@ -108,13 +108,20 @@ class Processor:
         # Call functions to setup the model
         self.writeH5.name = f"{self.data_filename}.h5"
         self._setup_model()
-        self.sample_splitter.register_object(self.fft, self.writeH5)
+        
+        if self.log_data:
+            self.sample_splitter.register_object(self.fft, self.writeH5)
+            
+        else:
+            self.sample_splitter.register_object(self.fft)
+        
         print("Registered objects from sample splitter.")
         
         self._model_threads()
-        # Start thread for data logging
-        print("Starting Data Saving thread.")
-        self.save_time_samples_thread.start()
+        
+        if self.log_data:
+            print("Starting Data Saving thread.")
+            self.save_time_samples_thread.start()
         
         # Start thread for CSM generation
         print("Starting CSM thread.")
@@ -139,8 +146,9 @@ class Processor:
         self.compute_prediction_thread.join() 
         print("Prediction thread stopped.")
         
-        self.save_time_samples_thread.join()
-        print("Data Saving thread stopped.")
+        if self.log_data:
+            self.save_time_samples_thread.join()
+            print("Data Saving thread stopped.")
 
         # Clear the CSM queue
         while not self.csm_queue.empty():
@@ -150,7 +158,12 @@ class Processor:
                 break
         print("CSM queue cleared.")
         
-        self.sample_splitter.remove_object(self.fft, self.writeH5)
+        if self.log_data:
+            self.sample_splitter.remove_object(self.fft, self.writeH5)
+            
+        else:
+            self.sample_splitter.remove_object(self.fft)
+            
         print("Removed objects from sample splitter.")
         
     def get_results(self):
@@ -244,7 +257,9 @@ class Processor:
         # Threads
         self.csm_thread = Thread(target=self._csm_generator)
         self.compute_prediction_thread = Thread(target=self._predictor)
-        self.save_time_samples_thread = Thread(target=self._save_time_samples) 
+        
+        if self.log_data:
+            self.save_time_samples_thread = Thread(target=self._save_time_samples) 
         
     def _csm_generator(self):
         """ CSM generator thread for the model
@@ -272,22 +287,12 @@ class Processor:
                 
             except queue.Empty:
                 continue
-
-            # Collect all available data
-            while not self.model_stop_event.is_set():
-                try:
-                    data = self.csm_queue.get_nowait()
-                    csm_list.append(data)
-                except queue.Empty:
-                    break 
                 
             # Calculate the mean of the CSM data
             csm_mean = np.mean(csm_list, axis=0)
-            #np.save("csm.npy", csm_mean)
             
             # Preprocess the CSM data
             eigmode, csm_norm = self._preprocess_csm(csm_mean)
-            #np.save("eigmode.npy", eigmode)
             
             # Predict the strength and location
             strength_pred, loc_pred, noise_pred = self.model.predict(eigmode, verbose=0)
@@ -315,7 +320,6 @@ class Processor:
     def _preprocess_csm(self, data):
         """ Preprocess the CSM data
         """
-        # will not be necessary, as soon as MsskedSpectraInOut is implemented
         csm = data.reshape(self.csm_shape)
         csm = csm[self.f_ind].reshape(self.dev.numchannels, self.dev.numchannels)
 
@@ -344,11 +348,19 @@ class Processor:
         """
         print("\nStarting beamforming.")
         
-        # filenames
+        self._generators()
+        
         self.data_filename, self.results_filename = self._get_result_filenames('beamforming')
         
         self.writeH5.name = f"{self.data_filename}.h5"
-        self.sample_splitter.register_object(self.lastOut, self.writeH5)
+        
+        if self.log_data:
+            self.sample_splitter.register_object(self.lastOut, self.writeH5)
+
+        else:
+            self.sample_splitter.register_object(self.lastOut)
+        print(self.beamforming_grid.z)
+        
         print("Registered objects from sample splitter.")
         
         self._beamforming_threads()
@@ -357,8 +369,10 @@ class Processor:
         self.beamforming_thread.start()   
         print("Beamforming thread started.")
         
-        self.save_time_samples_beamforming_thread.start()
-        print("Time data saving thread started.")
+        # Start the thread for saving time samples
+        if self.log_data:
+            self.save_time_samples_beamforming_thread.start()
+            print("Time data saving thread started.")
     
     def stop_beamforming(self):
         """ Stop the beamforming process
@@ -367,20 +381,24 @@ class Processor:
         
         # Set the event to stop all threads
         self.beamforming_stop_event.set()
-        # End the beamforming thread
+
         self.beamforming_thread.join()
         print("Beamforming thread stopped.")
         
-        self.save_time_samples_beamforming_thread.join()
-        print("Time data saving thread stopped.")
+        if self.log_data:
+            self.save_time_samples_beamforming_thread.join()
+            print("Time data saving thread stopped.")
+            self.sample_splitter.remove_object(self.lastOut, self.writeH5)
         
-        self.sample_splitter.remove_object(self.lastOut, self.writeH5)
+        else:
+            self.sample_splitter.remove_object(self.lastOut)
+            
         print("Removed objects from sample splitter.")
         
     def get_beamforming_results(self):
         """ Get current results of the model
         """
-        # Return a copy of the results safely
+        # Return a copy of the results
         with self.beamforming_result_lock:
             return self.beamforming_results.copy()
         
@@ -390,9 +408,10 @@ class Processor:
         # Event to eventually stop all threads
         self.beamforming_stop_event = Event()
         
-        # Thread
         self.beamforming_thread = Thread(target=self._beamforming_generator)
-        self.save_time_samples_beamforming_thread = Thread(target=self._save_time_samples_beamforming)
+        
+        if self.log_data:
+            self.save_time_samples_beamforming_thread = Thread(target=self._save_time_samples_beamforming)
         
     def _get_maximum_coordinates(self, data):
         """ Get the maximum coordinates of the beamforming results
@@ -445,6 +464,11 @@ class Processor:
         print("Finished saving time samples.")
         print(f"Saved {block_count} blocks.")
               
+    def update_z(self, z):
+        self.z = z
+        self.beamforming_grid = ac.RectGrid(x_min=self.x_min, x_max=self.x_max, y_min=self.y_min, y_max=self.y_max, z=z, increment=self.increment)
+
+        
     def update_frequency(self, frequency):
         """ Update the target frequency for the model
         """
@@ -524,8 +548,7 @@ class Processor:
                     freq_dataset = hf['frequency']
                     freq_dataset.resize((freq_dataset.shape[0] + len(current_results['x']),))
                     freq_dataset[-len(current_results['x']):] = [current_frequency] * len(current_results['x'])
-                    
-                    
+                         
     def _save_beamforming_results(self):
         """ Save the results to a CSV and H5 file
         """
@@ -565,6 +588,4 @@ class Processor:
                     freq_dataset = hf['frequency']
                     freq_dataset.resize((freq_dataset.shape[0] + len(current_results['max_x']),))
                     freq_dataset[-len(current_results['max_x']):] = [current_frequency] * len(current_results['max_x'])
-    
-
     

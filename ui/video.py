@@ -11,7 +11,7 @@ from threading import Thread, Lock
 class VideoStream:
     """Class for reading video frames from a video capture object."""
     
-    def __init__(self, camera_index, fps=15, desired_width=640, desired_height=480, undistort=False):
+    def __init__(self, camera_index, fps=1, desired_width=160, desired_height=120, undistort=False):
         """Initialize the video stream with the given frame dimensions and camera index."""
         self.camera_index = camera_index
         

@@ -16,11 +16,11 @@ video_index = 0
 #video_index = list_cameras()[0] # get the first valid camera index
 
 camera_on = False
-model_on = False
+model_on = True
 
 device_index = get_uma16_index()
+# device_index = 0
 
-video_stream = None
 
 if camera_on:
     video_stream = VideoStream(
@@ -35,8 +35,6 @@ processor = Processor(
     micgeom_path,
     results_folder,
     ckpt_path,
-    CSV,
-    H5,
     Z)
 
 dashboard = Dashboard(
