@@ -2,9 +2,6 @@ import acoular as ac
 from pathlib import Path
 from .funcs_camera import calculate_alphas
 
-ac.
-
-
 UNDISTORT = False # TODO set UNDISTORT to True to undistort the camera image -> callibration needed
 
 # Speaker position
@@ -12,18 +9,13 @@ X, Y, Z = 0.0, 0.005, 1.67 #m
 
 MIN_DISTANCE = 1 #m
 THRESHOLD = 40
-DESIRED_WIDTH = 640
-DESIRED_HEIGHT = 480
+DESIRED_WIDTH = 160
+DESIRED_HEIGHT = 120
 FPS = 20
 SCALE_FACTOR = 1.3
-CAMERA_ON = False
 
 DX, DZ = 143, 58 #m
 alphas = calculate_alphas(dx=DX, dz=DZ)
-
-# Configuration for saving results
-CSV = False
-H5 = False
 
 # Update rate configurations for Interface in ms
 ESTIMATION_UPDATE_INTERVAL = 100

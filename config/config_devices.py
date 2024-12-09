@@ -9,7 +9,7 @@ def get_uma16_index():
     device_index = None
 
     for index, device in enumerate(devices):
-        if "nanoSHARC micArray16 UAC2.0" in device['name']:
+        if "nanoSHARC micArray16" in device['name']:
             device_index = index
             print(f"\nUMA-16 device: {device['name']} at index {device_index}\n")
             break

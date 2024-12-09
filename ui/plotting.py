@@ -147,8 +147,6 @@ class AcousticCameraPlot:
         self.beamforming_renderer.visible = True
 
         beamforming_map = results['results']
-        print(type(beamforming_map))
-        print(len(beamforming_map))
         self.beamforming_cds.data = {'beamformer_data': [beamforming_map]}
 
     def update_plot_beamforming_dots(self, results):

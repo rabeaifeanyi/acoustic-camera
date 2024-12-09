@@ -23,10 +23,9 @@ class Dashboard:
         self.video_stream = video_stream
         
         if self.stream_on:
-            # Frame dimensions
             self.frame_width, self.frame_height = video_stream.frame_width, video_stream.frame_height
             
-        else: 
+        else:
             self.frame_width, self.frame_height = 640, 480
         
         # Actual width of the plot  
@@ -61,7 +60,7 @@ class Dashboard:
                                     )    
         
         self.acoustic_camera_plot.fig.output_backend = "webgl" 
-        
+
         # Setting up the update intervals
         self.estimation_update_interval = estimation_update_interval
         self.beamforming_update_interval = beamforming_update_interval
@@ -126,6 +125,17 @@ class Dashboard:
         
         # Setting up the callbacks
         self.setup_callbacks()
+        
+    def update_test_data(self):
+            if len(self.x_vals) > 100:  # Begrenzung der Datenpunkte
+                self.x_vals = self.x_vals[1:]
+                self.y_vals = self.y_vals[1:]
+            
+            # Neue Daten hinzufügen
+            self.x_vals.append(len(self.x_vals))
+            self.y_vals.append(np.sin(len(self.x_vals) * 0.1))
+            
+            self.source.data = {'x': self.x_vals, 'y': self.y_vals}
         
     def get_layout(self):
         """Return the layout of the dashboard
@@ -210,7 +220,7 @@ class Dashboard:
         # Content layout of Page
         content_layout = column(
             header,
-            #self.acoustic_camera_plot.fig,
+            self.acoustic_camera_plot.fig,
             self.video_div,
             self.deviation_plot,
             sizing_mode="stretch_both",
@@ -253,7 +263,7 @@ class Dashboard:
         self.measurement_button.on_click(self.start_measurement)
 
         # Start the acoustic camera plot
-        self.start_acoustic_camera_plot()
+        self.show_acoustic_camera_plot()
 
     def toggle_method(self, attr, old, new):
         """Callback for the method selector"""
@@ -303,18 +313,22 @@ class Dashboard:
                 self.start_model()
                 self.start_time = datetime.datetime.now()
                 self.measurement_button.label = stop_text
+                self._disable_widgets()
             else:
-                self.stop_model()
+                self.stop_measurement()
                 self.measurement_button.label = start_text
+                self._enable_widgets()
         
         elif self.method == 1:
             if self.beamforming_thread is None:
                 self.start_beamforming()
                 self.start_time = datetime.datetime.now()
                 self.measurement_button.label = stop_text
+                self._disable_widgets()
             else:
-                self.stop_beamforming()
+                self.stop_measurement()
                 self.measurement_button.label = start_text
+                self._enable_widgets()
         
     def update_real_x(self, attr, old, new):
         """Callback for the real x input field
@@ -340,6 +354,7 @@ class Dashboard:
         try:
             z = float(new)
             self.real_z = z
+            self.processor.update_z(z)
         except ValueError:
             pass
         
@@ -409,52 +424,25 @@ class Dashboard:
         current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         return self.processor.results_folder + f'/{current_time}.png'
 
-    def start_acoustic_camera_plot(self):
+    def show_acoustic_camera_plot(self):
         if self.stream_on:
             self.video_stream.start()  
         
         # Deep Learning
         if self.method == 0:
             self.stop_beamforming()
-            #self.acoustic_camera_plot.beamforming_renderer.visible = False
+            self.acoustic_camera_plot.beamforming_renderer.visible = False
             self.acoustic_camera_plot.model_renderer.visible = True
         
         # Beamforming
         elif self.method == 1:
             self.stop_model()
             self.acoustic_camera_plot.model_renderer.visible = False
-            #self.acoustic_camera_plot.beamforming_renderer.visible = True
-            #print(self.acoustic_camera_plot.beamforming_renderer.visible)
+            self.acoustic_camera_plot.beamforming_renderer.visible = True
 
         if self.stream_on:
             if self.camera_view_callback is None:
                 self.camera_view_callback = curdoc().add_periodic_callback(self.update_camera_view, self.camera_update_interval)
-
-    def stop_acoustic_camera_plot(self):
-        """Stop periodic callbacks for the acoustic camera plot"""
-        
-        if self.stream_on:
-            if self.camera_view_callback is not None:
-                curdoc().remove_periodic_callback(self.camera_view_callback)
-                self.camera_view_callback = None
-
-        if self.estimation_callback is not None:
-            curdoc().remove_periodic_callback(self.estimation_callback)
-            self.estimation_callback = None
-
-        if self.beamforming_callback is not None:
-            curdoc().remove_periodic_callback(self.beamforming_callback)
-            self.beamforming_callback = None
-            
-        self.stop_measurement()
-        if self.stream_on:
-            self.video_stream.stop()
-
-    def toggle_plot_visibility(self, attr, old, new):
-        self.stop_measurement()
-        self.measurement_button.label = "Start Messung"
-        self.acoustic_camera_plot.fig.visible = True
-        self.start_acoustic_camera_plot()
 
     def toggle_mic_visibility(self, visible):
         self.acoustic_camera_plot.toggle_mic_visibility(visible)
@@ -538,6 +526,7 @@ class Dashboard:
         if self.beamforming_thread is not None:
             self.beamforming_thread.join()
             self.beamforming_thread = None
+            self.processor.stop_beamforming()
             
         if self.beamforming_callback is not None:
             curdoc().remove_periodic_callback(self.beamforming_callback)
@@ -581,4 +570,31 @@ class Dashboard:
         )
     
         self.deviation_cds.stream(new_deviation_data, rollover=200)
-    
+        
+    def _disable_widgets(self):
+        self.f_input.disabled = True
+        self.x_input.disabled = True
+        self.y_input.disabled = True
+        self.z_input.disabled = True
+        self.threshold_input.disabled = True
+        if self.model_on:
+            self.csm_block_size_input.disabled = True
+            self.min_queue_size_input.disabled = True
+            self.cluster_distance_input.disabled = True
+            self.method_selector.disabled = True
+            self.cluster_results.disabled = True
+
+    def _enable_widgets(self):
+        self.f_input.disabled = False
+        self.x_input.disabled = False
+        self.y_input.disabled = False
+        self.z_input.disabled = False
+        self.threshold_input.disabled = False
+        if self.model_on:
+            self.csm_block_size_input.disabled = False
+            self.min_queue_size_input.disabled = False
+            self.cluster_distance_input.disabled = False
+            self.method_selector.disabled = False
+            self.cluster_results.disabled = False
+
+        
