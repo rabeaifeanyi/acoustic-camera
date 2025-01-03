@@ -1,16 +1,17 @@
 import os
 import acoular as ac
 from pathlib import Path
-from bokeh.plotting import curdoc # type: ignore
-from ui import Dashboard, VideoStream  # type: ignore
-from data_processing import Processor  # type: ignore
-from config import *  # type: ignore
+from bokeh.plotting import curdoc
+from ui import Dashboard
+from data_processing import Processor 
+
+from config import * 
 
 
 ac.config.global_caching = "none"
 
 CONFIG_PATH = "config/config.json"
-config = ConfigManager(CONFIG_PATH) # type: ignore
+config = ConfigManager(CONFIG_PATH)
 
 model_name = config.get("model.name")
 base_directory = Path(config.get("model.base_directory"))
@@ -44,8 +45,6 @@ base_path = config.get("acoular.micgeom_file.base_path")
 file_name = config.get("acoular.micgeom_file.file_name")
 
 micgeom_path = Path(ac.__file__).parent / base_path / file_name
-
-video_stream = None
     
 processor = Processor(
     device_index,

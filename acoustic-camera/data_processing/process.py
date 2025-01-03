@@ -2,8 +2,6 @@ import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 import tensorflow as tf
-#tf.config.threading.set_intra_op_parallelism_threads(10)
-
 import numpy as np
 import acoular as ac
 import datetime

@@ -5,8 +5,6 @@
 from traits.api import Instance
 from threading import Thread
 from numpy import shape
-
-# acoular imports
 from acoular import TimeInOut, SampleSplitter
 
 class LastInOut(TimeInOut):

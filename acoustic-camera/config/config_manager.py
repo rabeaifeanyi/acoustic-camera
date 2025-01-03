@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+
 class ConfigManager:
     _instance = None
 
@@ -13,7 +14,7 @@ class ConfigManager:
         return cls._instance
 
     def _load_config(self, config_path):
-        """Lädt die JSON-Konfigurationsdatei."""
+        """Loads the JSON configuration file."""
         config_path = Path(config_path)
         if not config_path.exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -22,7 +23,7 @@ class ConfigManager:
             self._config = json.load(f)
 
     def get(self, key, default=None):
-        """Gibt einen Wert aus der Konfiguration zurück."""
+        """Returns a value from the configuration."""
         keys = key.split('.')
         value = self._config
         for k in keys:
@@ -32,7 +33,7 @@ class ConfigManager:
         return value
 
     def set(self, key, value):
-        """Setzt einen Wert in der Konfiguration."""
+        """Sets a value in the configuration."""
         keys = key.split('.')
         config = self._config
         for k in keys[:-1]:
