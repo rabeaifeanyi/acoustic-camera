@@ -2,32 +2,31 @@ from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, Arrow, VeeHead, ColorBar, LinearColorMapper
 from bokeh.palettes import Magma256
 from bokeh.transform import linear_cmap
-from .config_ui import *
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
 
 class AcousticCameraPlot:
-    def __init__(self, frame_width, frame_height, mic_positions, alphas, threshold, scale_factor=1, Z=1.2, min_distance=1, max_level=90):
+    def __init__(self, config, frame_width, frame_height, mic_positions, alphas, max_level=90):
+        
+        self.config = config
+        
+        self.threshold = self.config.get('app_default_settings.threshold')
+        self.Z = self.config.get('app_default_settings.z')
+        self.min_distance = self.config.get('app_default_settings.min_distance')
         
         # Set the frame width and height
-        self.frame_width = int(frame_width * scale_factor)
-        self.frame_height = int(frame_height * scale_factor)
+        self.frame_width = int(frame_width)
+        self.frame_height = int(frame_height)
         
         self.min_cluster_distance = 0
         
         self.cluster = 0
-        
-        self.Z = Z
-        self.min_distance = min_distance
-        
+   
         self.max_level = max_level
         
         # Array with microphone positions
         self.mic_positions = mic_positions
-        
-        # Threshold for the model data
-        self.threshold = threshold
         
         # Data source for the camera image
         self.camera_cds = ColumnDataSource({'image_data': []})
@@ -43,7 +42,7 @@ class AcousticCameraPlot:
         self.alpha_x, self.alpha_y = alphas
         
         # Calculate the view range
-        self.xmin, self.xmax, self.ymin, self.ymax = self.calculate_view_range(Z)
+        self.xmin, self.xmax, self.ymin, self.ymax = self.calculate_view_range(self.Z)
         
         # Point sizes for the model data
         self.min_point_size, self.max_point_size = 5,20
@@ -182,40 +181,42 @@ class AcousticCameraPlot:
                     dw=(self.xmax-self.xmin), 
                     dh=(self.ymax-self.ymin), 
                     source=self.camera_cds, 
-                    alpha=VIDEOALPHA)
+                    alpha=self.config.get('ui.video_alpha'))
         
         self.mic_cds.data = dict(x=self.mic_positions[0], y=self.mic_positions[1])
         
         fig.scatter(x='x', 
                     y='y',
                     marker='circle', 
-                    size=MICSIZE, 
-                    color=MICCOLOR, 
-                    line_color=MICLINECOLOR,
-                    alpha=MICALPHA, 
+                    size=self.config.get('ui.mic_size'), 
+                    color=self.config.get('ui.mic_color'), 
+                    line_color=self.config.get('ui.mic_line_color'),
+                    alpha=self.config.get('ui.mic_alpha'), 
                     source=self.mic_cds)
         
-        self.arrow_x = Arrow(end=VeeHead(size=ORIGINHEADSIZE,fill_color=ORIGINCOLOR, line_color=ORIGINCOLOR), 
+        self.arrow_x = Arrow(end=VeeHead(size=self.config.get('ui.origin_head_size'),fill_color=self.config.get('ui.origin_color'), line_color=self.config.get('ui.origin_color')), 
                              x_start=0, 
                              y_start=0, 
-                             x_end=ORIGINLENGTH, 
+                             x_end=self.config.get('ui.origin_length'), 
                              y_end=0, 
-                             line_width=ORIGINLINEWIDTH,
-                             line_color=ORIGINCOLOR)
+                             line_width=self.config.get('ui.origin_line_width'),
+                             line_color=self.config.get('ui.origin_color'))
         fig.add_layout(self.arrow_x)
         
-        self.arrow_y = Arrow(end=VeeHead(size=ORIGINHEADSIZE, fill_color=ORIGINCOLOR, line_color=ORIGINCOLOR), 
+        self.arrow_y = Arrow(end=VeeHead(size=self.config.get('ui.origin_head_size'), fill_color=self.config.get('ui.origin_color'), line_color=self.config.get('ui.origin_color')), 
                              x_start=0, 
                              y_start=0, 
                              x_end=0, 
-                             y_end=ORIGINLENGTH, 
-                             line_width=ORIGINLINEWIDTH,
-                             line_color=ORIGINCOLOR)
+                             y_end=self.config.get('ui.origin_length'), 
+                             line_width=self.config.get('ui.origin_line_width'),
+                             line_color=self.config.get('ui.origin_color'))
         fig.add_layout(self.arrow_y)
         
-        # fig.background_fill_color = PLOT_BACKGROUND_COLOR
-        # fig.border_fill_color = BACKGROUND_COLOR
-        # fig.outline_line_color = None 
+        fig.xaxis.visible = False 
+        fig.yaxis.visible = False 
+
+        # fig.xgrid.grid_line_color = None
+        # fig.ygrid.grid_line_color = None
         
         fig.background_fill_alpha = 0
         fig.border_fill_alpha = 0
@@ -234,7 +235,7 @@ class AcousticCameraPlot:
             marker='circle', 
             size='sizes', 
             color=self.color_mapper,
-            alpha=DOTALPHA, 
+            alpha=self.config.get('ui.dot_alpha'), 
             source=self.model_cds
         )
 
@@ -263,7 +264,7 @@ class AcousticCameraPlot:
             label_standoff=12, 
             width=8, 
             location=(0, 0),
-            background_fill_color=PLOT_BACKGROUND_COLOR
+            background_fill_color=self.config.get('ui.background_color'),
         )
 
         fig.add_layout(color_bar, 'right')  

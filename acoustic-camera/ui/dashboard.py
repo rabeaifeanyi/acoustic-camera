@@ -5,17 +5,13 @@ from bokeh.layouts import column, layout, row
 from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource
 from bokeh.plotting import curdoc, figure
 from .plotting import AcousticCameraPlot
-from .config_ui import *
 
 
 class Dashboard:
-    def __init__(self, video_stream, processor, stream_on, model_on, 
-                 estimation_update_interval, beamforming_update_interval, camera_update_interval,
-                 threshold, scale_factor, x, y, z, alphas, min_distance):
+    def __init__(self, config, processor, model_on=False, alphas=None, video_stream=None, stream_on=False, ):
+        
+        self.config = config
 
-        # Scale factor for the plot
-        self.scale_factor = scale_factor  
-                 
         # Boolean for stream status
         self.stream_on = stream_on
         
@@ -26,10 +22,10 @@ class Dashboard:
             self.frame_width, self.frame_height = video_stream.frame_width, video_stream.frame_height
             
         else:
-            self.frame_width, self.frame_height = 640, 480
+            self.frame_width, self.frame_height = self.config.get('layout.video.width'), self.config.get('layout.video.height')
         
         # Actual width of the plot  
-        self.actual_width = int(self.frame_width * 1.1 * scale_factor)
+        self.actual_width = int(self.frame_width)
 
         # Boolean for model status
         self.model_on = model_on
@@ -49,26 +45,25 @@ class Dashboard:
         
         # Setting up the acoustic camera plot
         self.acoustic_camera_plot = AcousticCameraPlot(
+                                        config=self.config,
                                         frame_width=self.frame_width,
                                         frame_height=self.frame_height,
                                         mic_positions=processor.mics.mpos,
                                         alphas=alphas,
-                                        threshold=threshold,
-                                        Z=z,
-                                        scale_factor=scale_factor,
-                                        min_distance=min_distance
                                     )    
         
         self.acoustic_camera_plot.fig.output_backend = "webgl" 
 
         # Setting up the update intervals
-        self.estimation_update_interval = estimation_update_interval
-        self.beamforming_update_interval = beamforming_update_interval
-        self.camera_update_interval = camera_update_interval
-        self.overflow_update_interval = estimation_update_interval
+        self.estimation_update_interval = self.config.get('app_settings.estimation_update_interval')
+        self.beamforming_update_interval = self.config.get('app_settings.beamforming_update_interval')
+        self.camera_update_interval = self.config.get('app_settings.camera_update_interval')
+        self.overflow_update_interval = self.config.get('app_settings.stream_update_interval')
         
-        # Real coordinates
-        self.real_x, self.real_y, self.real_z = x, y, z
+        # Real coordinates  
+        self.real_x = self.config.get('app_default_settings.x')
+        self.real_y = self.config.get('app_default_settings.y')
+        self.real_z = self.config.get('app_default_settings.z')
         
         if processor.dev is not None:
             # Frequency input field
@@ -153,17 +148,19 @@ class Dashboard:
                     top: 0;
                     left: 0;
                     height: 100%;
-                    width: 300px;
+                    width: 260px;
                     background-color: #ecf0f1;
-                    padding: 20px;
+                    padding: 60px;
                     box-sizing: border-box;
+                }
+                 #sidebar > * {
+                    margin-left: 35px; /* Abstand für alle Kinder-Elemente */
                 }
             </style>
             """
         
         # Header "Acoustic Camera"
-        header = Div(text=f"<h1 style='color:{FONTCOLOR}; font-family:{FONT}; margin-left: 320px;'>Acoustic Camera</h1>", 
-                     margin=(20, 0, 0, 0))
+        header = Div(text=f"<h1 style='color:{self.config.get('ui.font_color')}; font-family:{self.config.get('ui.font')}; '>Acoustic Camera</h1>") #margin-left: 20px;
         
         # Checkboxes for origin and mic-geom visibility
         self.checkbox_group = CheckboxGroup(labels=["Show Microphone Geometry", "Show Origin"], active=[0, 1])
@@ -174,6 +171,7 @@ class Dashboard:
         
         if self.model_on and self.processor.dev is not None:
             self.sidebar_section = column(
+                header,
                 self.method_selector,
                 self.cluster_results,
                 self.cluster_distance_input,
@@ -196,6 +194,7 @@ class Dashboard:
             
         elif self.processor.dev is not None:
             self.sidebar_section = column(
+                header,
                 self.x_input,
                 self.y_input,
                 self.z_input,
@@ -213,26 +212,36 @@ class Dashboard:
             
         # Sidebar layout
         sidebar = column(
-            Div(text=f"{sidebar_style}<div id='sidebar'></div>", width=SIDEBAR_WIDTH),
+            Div(text=f"{sidebar_style}<div id='sidebar'></div>", width=self.config.get("layout.sidebar.width")),
             self.sidebar_section
-        )
+        )   
             
         # Content layout of Page
         content_layout = column(
-            header,
             self.acoustic_camera_plot.fig,
-            self.video_div,
+            #self.deviation_plot,
+            sizing_mode="fixed",
+            width=900,
+            height=700,
+        )
+        
+        more_plots_layout = column(
             self.deviation_plot,
-            sizing_mode="stretch_both",
-            margin=(0, 320, 0, 0) 
+            sizing_mode="fixed",
+            width=500,
+            height=700,
+        )
+        space = column(
+            sizing_mode="fixed",
+            width=100,
+            height=700,
         )
 
         # Main dashboard layout
         self.dashboard_layout = layout(
-            row(sidebar, content_layout),
-            sizing_mode="stretch_both",
-            background=BACKGROUND_COLOR,
-            margin=(0, 0, 0, 0)
+            row(sidebar, content_layout, space, more_plots_layout),
+            sizing_mode="fixed",
+            background=self.config.get("ui.background"),
         )
 
     def setup_callbacks(self):
@@ -300,11 +309,11 @@ class Dashboard:
         """Stop the current measurement"""
         if self.model_thread is not None:
             self.stop_model()
-            self.measurement_button.label = start_text
+            self.measurement_button.label = self.config.get("ui.start_text")
         
         if self.beamforming_thread is not None:
             self.stop_beamforming()
-            self.measurement_button.label = start_text
+            self.measurement_button.label = self.config.get("ui.start_text")
                 
     def start_measurement(self):
         """Callback für den Messungs-Button, startet oder stoppt die Messung"""        
@@ -312,22 +321,22 @@ class Dashboard:
             if self.model_thread is None:
                 self.start_model()
                 self.start_time = datetime.datetime.now()
-                self.measurement_button.label = stop_text
+                self.measurement_button.label = self.config.get("ui.stop_text")
                 self._disable_widgets()
             else:
                 self.stop_measurement()
-                self.measurement_button.label = start_text
+                self.measurement_button.label = self.config.get("ui.start_text")
                 self._enable_widgets()
         
         elif self.method == 1:
             if self.beamforming_thread is None:
                 self.start_beamforming()
                 self.start_time = datetime.datetime.now()
-                self.measurement_button.label = stop_text
+                self.measurement_button.label = self.config.get("ui.stop_text")
                 self._disable_widgets()
             else:
                 self.stop_measurement()
-                self.measurement_button.label = start_text
+                self.measurement_button.label = self.config.get("ui.start_text")
                 self._enable_widgets()
         
     def update_real_x(self, attr, old, new):
@@ -411,12 +420,12 @@ class Dashboard:
         self.overflow_status.text = status_text
         
     def _create_deviation_plot(self):
-        self.deviation_plot = figure(width=self.actual_width, height=250, title="Live Deviation Plot")
+        self.deviation_plot = figure(width=600, height=220, title="Live Deviation Plot")
         self.deviation_plot.line(x='time', y='x_deviation', source=self.deviation_cds, color="blue", legend_label="X Deviation")
         self.deviation_plot.line(x='time', y='y_deviation', source=self.deviation_cds, color="green", legend_label="Y Deviation")
         self.deviation_plot.line(x='time', y='z_deviation', source=self.deviation_cds, color="red", legend_label="Z Deviation")
-        self.deviation_plot.background_fill_color = BACKGROUND_COLOR
-        self.deviation_plot.border_fill_color = BACKGROUND_COLOR
+        self.deviation_plot.background_fill_color = self.config.get("ui.background_color")
+        self.deviation_plot.border_fill_color = self.config.get("ui.background_color")
         
     def _get_result_filenames(self):
         """ Get the filenames for the results

@@ -20,7 +20,7 @@ ac.config.global_caching = "none"
 
 
 class Processor:
-    def __init__(self, device_index, micgeom_path, results_folder, ckpt_path, z,
+    def __init__(self, device_index, micgeom_path, results_folder, ckpt_path=None, model_on=False, z=1.5,
                  csm_block_size=256, csm_min_queue_size=60, csm_buffer_size=1000):
         """ Processor for the UMA16 Acoustic Camera
         """
@@ -60,6 +60,7 @@ class Processor:
         
         # Path to the model checkpoint
         self.ckpt_path = ckpt_path
+        self.model_on = model_on
         
         # Size of the buffer in CSM queue
         self.csm_buffer_size = csm_buffer_size
@@ -178,7 +179,7 @@ class Processor:
         """
         print("Setting up generators for the process.")
         
-        if self.ckpt_path is None:
+        if self.ckpt_path is None or not self.model_on:
             self.dev = ac.SoundDeviceSamplesGenerator(device=self.device, numchannels=16)
         
         else:
@@ -194,7 +195,7 @@ class Processor:
         # Generator for logging the time data
         self.writeH5 = ac.WriteH5(source=self.sample_splitter, name=f"{self.data_filename}.h5") 
         
-        if self.ckpt_path is None:
+        if self.ckpt_path is None or not self.model_on:
             print("No model has been loaded. Model Option will not be availiable.")
         else:
             # Real Fast Fourier Transform
