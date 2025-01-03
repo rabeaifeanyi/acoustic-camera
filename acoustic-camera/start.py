@@ -4,6 +4,7 @@ import time
 import signal
 from config import ConfigManager
 
+
 CONFIG_PATH = "config/config.json"
 config = ConfigManager(CONFIG_PATH)
 

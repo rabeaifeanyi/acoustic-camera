@@ -68,8 +68,8 @@ def calculate_alphas(ratio=(4, 3), dx=None, dy=None, dz=None):
 
     Args:
         ratio (tuple): Aspect ratio of the camera (default is (4, 3)).
-        dx (float, optional): Width of the field of view in real-world units.
-        dy (float, optional): Height of the field of view in real-world units.
+        dx (float, optional): Width of the field of view.
+        dy (float, optional): Height of the field of view.
         dz (float): Distance from the camera to the object plane.
 
     Returns:

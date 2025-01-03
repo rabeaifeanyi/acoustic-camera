@@ -1,8 +1,9 @@
 from flask import Flask, render_template, Response
-import cv2 #type:ignore
+import cv2
 from bokeh.embed import server_document
 import json
 import os
+
 
 app = Flask(__name__,
             template_folder=os.path.abspath("templates"))

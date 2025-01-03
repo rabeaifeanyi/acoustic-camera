@@ -5,7 +5,6 @@ Features:
 ---------
 1. **Audio Devices:**
    - List all audio devices available on the system.
-   - Identify the UMA-16 microphone array by its name.
 
 2. **Camera Devices:**
    - List all available camera devices.
@@ -22,17 +21,13 @@ How to Use:
 
 Functions:
 ----------
-1. `get_uma16_index()`:
-   - Searches for the UMA-16 microphone array and returns its index.
-   - If the device is not found, it returns `None`.
-
-2. `list_audio_devices()`:
+1. `list_audio_devices()`:
    - Lists all audio devices detected on the system.
 
-3. `list_cameras()`:
+2. `list_cameras()`:
    - Scans for all available cameras and lists their indices.
 
-4. `test_camera(index)`:
+3. `test_camera(index)`:
    - Opens a video feed from a camera specified by its index.
    - Displays the feed in a window.
    - Press 'q' to quit the test.
