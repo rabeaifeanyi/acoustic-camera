@@ -1,12 +1,9 @@
 import cv2
-cv2.setNumThreads(1)
-
 import numpy as np
 from config import load_calibration_data
-import time
 from threading import Thread, Lock
 
-# This will not be used in the final version
+# This is only used, when flask is not used
 
 class VideoStream:
     """Class for reading video frames from a video capture object."""

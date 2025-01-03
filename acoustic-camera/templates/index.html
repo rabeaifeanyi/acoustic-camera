@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bokeh Dashboard with Video</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; 
+            position: relative;
+        }
+
+        #video-container {
+            position: absolute;
+            top: {{ config.layout.video.y }}px;
+            left: {{ config.layout.video.x }}px;
+            width: {{ config.layout.video.width }}px;
+            height: {{ config.layout.video.height }}px;
+            z-index: 1; 
+        }
+
+        #bokeh-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%; 
+            z-index: 2; 
+        }
+    </style>
+</head>
+<body>
+    <div id="video-container">
+        <img src="{{ url_for('video_feed') }}" alt="Video Stream" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+
+    <div id="bokeh-container">
+        {{ bokeh_script|safe }}
+    </div>
+</body>
+</html>

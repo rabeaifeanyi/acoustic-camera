@@ -1,0 +1,84 @@
+{
+    "app_settings": {
+        "undistort": false,
+        "fps": 15,
+        "dx": 143,
+        "dz": 58,
+        "estimation_update_interval": 100,
+        "beamforming_update_interval": 1000,
+        "camera_update_interval": 100,
+        "stream_update_interval": 1000
+    },
+    "app_default_settings": {
+        "threshold": 40,
+        "min_distance": 1,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 1.5
+    },
+    "layout": {
+        "video": {
+            "width": 900,
+            "height": 700,
+            "x": 300,
+            "y": 100
+        },
+        "plot": {
+            "width": 900,
+            "height": 700,
+            "x": 300,
+            "y": 100
+        },
+        "sidebar": {
+            "width": 200,
+            "height": 700,
+            "x": 0,
+            "y": 0
+        }
+    },
+    "ui": {
+        "font": "Verdana",
+        "font_color": "#2c3e50",
+        "background_color": null,
+        "sidebar_color": "#f7f7f7",
+        "highlight_color": "#54a6ff",
+        "slider_background": "#f7f7f7",
+        "slider_bar_color": "#95a5a6",
+        "dot_color": "#e63704",
+        "dot_size": 4,
+        "dot_alpha": 0.8,
+        "shadow_color": "#ffbb38",
+        "shadow_alpha": 0.4,
+        "video_alpha": 0.75,
+        "mic_color": "#54a6ff",
+        "mic_line_color": "#2c3e50",
+        "mic_size": 3,
+        "mic_alpha": 1,
+        "plot_background_color": null,
+        "origin_length": 0.15,
+        "origin_color": "#54a6ff",
+        "origin_line_width": 1,
+        "origin_head_size": 8,
+        "figure_width": 800,
+        "figure_height": 600,
+        "sidebar_width": 300,
+        "start_text": "Start",
+        "stop_text": "Stop"
+    },
+    "model": {
+        "name": "EigmodeTransformer_learning_rate0.00025_weight_decay1e-06_epochs500_2024-10-22_10-33",
+        "base_directory": "/home/rabea/Documents/Bachelorarbeit/models",
+        "config_file": "config.toml",
+        "checkpoint": {
+            "directory": "ckpt/best_ckpt",
+            "file_pattern": "*.keras"
+        }
+    },
+    "acoular": {
+        "micgeom_file": {
+            "mic": "Uma16",
+            "base_path": "xml",
+            "file_name": "minidsp_uma-16_mirrored.xml"
+        }
+    }
+}
