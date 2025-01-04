@@ -2,7 +2,7 @@ import threading
 import numpy as np
 import datetime
 from bokeh.layouts import column, layout, row
-from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource
+from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource #type:ignore
 from bokeh.plotting import curdoc, figure
 from .plotting import AcousticCameraPlot
 
@@ -23,9 +23,6 @@ class Dashboard:
             
         else:
             self.frame_width, self.frame_height = self.config.get('layout.video.width'), self.config.get('layout.video.height')
-        
-        # Actual width of the plot  
-        self.actual_width = int(self.frame_width)
 
         # Boolean for model status
         self.model_on = model_on
@@ -141,26 +138,51 @@ class Dashboard:
         """Setup the layout of the dashboard
         """
         # Styling for the sidebar
-        sidebar_style = """
+        sidebar_style = f"""
             <style>
-                #sidebar {
+                #sidebar {{
                     position: fixed;
-                    top: 0;
-                    left: 0;
+                    top: {self.config.get('layout.sidebar.y')}px;
+                    left: {self.config.get('layout.sidebar.x')}px;
                     height: 100%;
-                    width: 260px;
-                    background-color: #ecf0f1;
-                    padding: 60px;
+                    width: {self.config.get('layout.sidebar.width')}px;
+                    background-color: {self.config.get('ui.sidebar_color')};
+                    padding: 0px;
                     box-sizing: border-box;
-                }
-                 #sidebar > * {
-                    margin-left: 35px; /* Abstand für alle Kinder-Elemente */
-                }
+                    overflow: hidden;
+                }}
             </style>
             """
+            
+        content_layout_style = f"""
+            <div style="
+                position: fixed; 
+                top: {self.config.get('layout.sidebar.y')}px; 
+                left: {self.config.get('layout.sidebar.width')}px;  
+                width: calc(100% - {self.config.get('layout.sidebar.width')}px); 
+                height: 100%; 
+                overflow: hidden; 
+                box-sizing: border-box;">
+            </div>
+            """
+            
+        plot_style = f"""
+            <style>
+                #plot {{
+                    position: fixed;
+                    top: {self.config.get('layout.plot.y')}px;
+                    left: {self.config.get('layout.plot.x')}px;
+                    width: calc(100% - 260px);
+                    height: 100%;
+                    overflow: hidden;
+                    box-sizing: border-box;
+                }}
+            </style>
+            """
+
         
         # Header "Acoustic Camera"
-        header = Div(text=f"<h1 style='color:{self.config.get('ui.font_color')}; font-family:{self.config.get('ui.font')}; '>Acoustic Camera</h1>") #margin-left: 20px;
+        header = Div(text=f"<h2 style='color:{self.config.get('ui.font_color')}; font-family:{self.config.get('ui.font')}; '>Acoustic Camera</h2>") #margin-left: 20px
         
         # Checkboxes for origin and mic-geom visibility
         self.checkbox_group = CheckboxGroup(labels=["Show Microphone Geometry", "Show Origin"], active=[0, 1])
@@ -209,39 +231,31 @@ class Dashboard:
             
         else:
             self.sidebar_section = self.no_array_text
-            
-        # Sidebar layout
+       
+        # Sidebar Column    
         sidebar = column(
-            Div(text=f"{sidebar_style}<div id='sidebar'></div>", width=self.config.get("layout.sidebar.width")),
+            Div(text=f"{sidebar_style}<div id='sidebar'></div>"),#, width=self.config.get("layout.sidebar.width")),
             self.sidebar_section
-        )   
-            
-        # Content layout of Page
-        content_layout = column(
-            self.acoustic_camera_plot.fig,
-            #self.deviation_plot,
-            sizing_mode="fixed",
-            width=900,
-            height=700,
         )
         
-        more_plots_layout = column(
-            self.deviation_plot,
-            sizing_mode="fixed",
-            width=500,
-            height=700,
-        )
-        space = column(
-            sizing_mode="fixed",
-            width=100,
-            height=700,
-        )
+        # Plot Column
+        if self.model_on and self.processor.dev is not None:
+            content_layout = column(
+                Div(text=f"{content_layout_style}"),
+                self.acoustic_camera_plot.fig,
+                self.deviation_plot,
+            )
+        else:
+            content_layout = column(
+                Div(text=f"{content_layout_style}"),
+                self.acoustic_camera_plot.fig,
+            )
 
         # Main dashboard layout
         self.dashboard_layout = layout(
-            row(sidebar, content_layout, space, more_plots_layout),
-            sizing_mode="fixed",
+            row(sidebar, content_layout),
             background=self.config.get("ui.background"),
+            sizing_mode="scale_height"
         )
 
     def setup_callbacks(self):

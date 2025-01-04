@@ -168,12 +168,13 @@ class AcousticCameraPlot:
             self.arrow_y.visible = visible
             
     def _create_base_fig(self):
-        fig = figure(width=self.frame_width, 
-                     height=self.frame_height, 
+        # TODO find out how to set exact positions
+        # frame_width causes problems when embedded with flask
+        fig = figure(width=900,
+                     height=600,
                      x_range=(self.xmin, self.xmax), 
                      y_range=(self.ymin, self.ymax),
-                     output_backend='webgl',
-                     aspect_ratio=1)
+                     output_backend='webgl')
 
         fig.image_rgba(image='image_data', 
                     x=self.xmin, 
@@ -215,8 +216,8 @@ class AcousticCameraPlot:
         fig.xaxis.visible = False 
         fig.yaxis.visible = False 
 
-        # fig.xgrid.grid_line_color = None
-        # fig.ygrid.grid_line_color = None
+        fig.xgrid.grid_line_color = None
+        fig.ygrid.grid_line_color = None
         
         fig.background_fill_alpha = 0
         fig.border_fill_alpha = 0
