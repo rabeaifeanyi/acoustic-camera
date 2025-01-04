@@ -19,19 +19,17 @@
     "layout": {
         "video": {
             "width": 900,
-            "height": 700,
+            "height": 600,
             "x": 300,
             "y": 100
         },
         "plot": {
             "width": 900,
-            "height": 700,
             "x": 300,
             "y": 100
         },
         "sidebar": {
-            "width": 200,
-            "height": 700,
+            "width": 260,
             "x": 0,
             "y": 0
         }
@@ -40,7 +38,7 @@
         "font": "Verdana",
         "font_color": "#2c3e50",
         "background_color": null,
-        "sidebar_color": "#f7f7f7",
+        "sidebar_color": "#ecf0f1",
         "highlight_color": "#54a6ff",
         "slider_background": "#f7f7f7",
         "slider_bar_color": "#95a5a6",
