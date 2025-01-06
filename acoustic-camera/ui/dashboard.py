@@ -42,12 +42,12 @@ class Dashboard:
         
         # Setting up the acoustic camera plot
         self.acoustic_camera_plot = AcousticCameraPlot(
-                                        config=self.config,
-                                        frame_width=self.frame_width,
-                                        frame_height=self.frame_height,
-                                        mic_positions=processor.mics.mpos,
-                                        alphas=alphas,
-                                    )    
+            config=self.config,
+            frame_width=self.frame_width,
+            frame_height=self.frame_height,
+            mic_positions=processor.mics.mpos,
+            alphas=alphas,
+        )    
         
         self.acoustic_camera_plot.fig.output_backend = "webgl" 
 
@@ -189,17 +189,21 @@ class Dashboard:
         header = Div(text=f"<h2 style='color:{self.config.get('ui.font_color')}; font-family:{self.config.get('ui.font')}; '>Acoustic Camera</h2>") #margin-left: 20px
         
         # Checkboxes for origin and mic-geom visibility
-        self.checkbox_group = CheckboxGroup(labels=["Show Microphone Geometry", "Show Origin"], active=[0, 1])
+        self.microphone_checkboxes = CheckboxGroup(labels=["Show Microphone Geometry", "Show Origin"], active=[0, 1])
+        
+        self.saving_options = CheckboxGroup(labels=["Save Results as H5", "Save Results as CSV"], active=[])
 
         # Measurement button
         # Problem: When stop is pressed to quickly and model has not properly started, error occurs
         self.measurement_button = Button(label="Start")
         
-        self.model_params_column = column(self.cluster_results,
-                                          self.csm_block_size_input,
-                                          self.min_queue_size_input,
-                                          self.cluster_distance_input,
-                                          )
+        self.model_params_column = column(
+            self.saving_options,
+            self.cluster_results,
+            self.csm_block_size_input,
+            self.min_queue_size_input,
+            self.cluster_distance_input,
+        )
         
         if self.model_on and self.processor.dev is not None:
             self.sidebar_section = column(
@@ -213,7 +217,7 @@ class Dashboard:
                 self.z_input,
                 self.f_input,
                 self.threshold_input,
-                self.checkbox_group,
+                self.microphone_checkboxes,
                 self.measurement_button,
                 self.coordinates_display,
                 self.level_display,
@@ -221,7 +225,8 @@ class Dashboard:
             )
             self.model_params_column.visible = False
             self.overflow_status.visible = False
-            self.checkbox_group.on_change("active", self.toggle_visibility)
+            self.microphone_checkboxes.on_change("active", self.toggle_visibility)
+            self.saving_options.on_change('active', self.toggle_saving_options)
             self.method_selector.on_change('active', self.toggle_method)
             self.save_time_data.on_change('active', self.toggle_save)
             self.cluster_results.on_change('active', self.toggle_cluster)
@@ -236,12 +241,12 @@ class Dashboard:
                 self.z_input,
                 self.f_input,
                 self.threshold_input,
-                self.checkbox_group,
+                self.microphone_checkboxes,
                 self.measurement_button,
                 self.coordinates_display,
                 self.level_display
             )
-            self.checkbox_group.on_change("active", self.toggle_visibility)
+            self.microphone_checkboxes.on_change("active", self.toggle_visibility)
             self.save_time_data.on_change('active', self.toggle_save)
             
         else:
@@ -504,6 +509,22 @@ class Dashboard:
     def toggle_visibility(self, attr, old, new):
         self.toggle_mic_visibility(0 in new)
         self.toggle_origin_visibility(1 in new)
+        
+    def toggle_h5_opt(self, visible):
+        if visible:
+            self.processor.save_h5 = True
+        else:
+            self.processor.save_h5 = False
+            
+    def toggle_csv_opt(self, visible):
+        if visible:
+            self.processor.save_csv = True
+        else:
+            self.processor.save_csv = False
+            
+    def toggle_saving_options(self, attr, old, new):
+        self.toggle_h5_opt(0 in new)
+        self.toggle_csv_opt(1 in new)
     
     def update_camera_view(self):
         with self.video_stream.read_lock:
