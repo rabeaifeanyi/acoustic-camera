@@ -84,8 +84,13 @@ class Dashboard:
                 # Switching between Deep Learning and Beamforming
                 self.method_selector = RadioButtonGroup(labels=["Deep Learning", "Beamforming"], active=self.method)  # 0 is "Deep Learning" as default
 
+            # Switch for saving the data
+            self.save_time_data = RadioButtonGroup(labels=["Save Time Data", "Discard"], active=1)
+            self.data_folder_display = Div(text=f"Saving data to: {self.processor.results_folder}", width=self.config.get('layout.sidebar.width'))
+            self.data_folder_display.visible = False
+                
             # Coordinates
-            self.coordinates_display = Div(text="", width=300, height=100)    
+            self.coordinates_display = Div(text="", width=self.config.get('layout.sidebar.width'))
                 
             # Plot of the deviation of the estimated position
             self.deviation_cds = ColumnDataSource(data=dict(time=[], x_deviation=[], y_deviation=[], z_deviation=[]))
@@ -97,11 +102,11 @@ class Dashboard:
             self.threshold_input = TextInput(value=str(self.acoustic_camera_plot.threshold), title="Threshold")
                                                         
             # Level display
-            self.level_display = Div(text="", width=300, height=100)
+            self.level_display = Div(text="", width=self.config.get('layout.sidebar.width'))
         
         else:
             # Text telling there is no Microphone Array connected
-            self.no_array_text = Div(text="No Microphone Array connected", width=300, height=100)
+            self.no_array_text = Div(text="No Microphone Array connected", width=self.config.get('layout.sidebar.width'))
             
         # Callbacks
         self.camera_view_callback = None
@@ -191,15 +196,17 @@ class Dashboard:
         self.measurement_button = Button(label="Start")
         
         self.model_params_column = column(self.cluster_results,
-                                   self.csm_block_size_input,
-                                   self.min_queue_size_input,
-                                   self.cluster_distance_input,
-                                   )
+                                          self.csm_block_size_input,
+                                          self.min_queue_size_input,
+                                          self.cluster_distance_input,
+                                          )
         
         if self.model_on and self.processor.dev is not None:
             self.sidebar_section = column(
                 header,
                 self.method_selector,
+                self.save_time_data,
+                self.data_folder_display,
                 self.model_params_column,
                 self.x_input,
                 self.y_input,
@@ -216,11 +223,14 @@ class Dashboard:
             self.overflow_status.visible = False
             self.checkbox_group.on_change("active", self.toggle_visibility)
             self.method_selector.on_change('active', self.toggle_method)
+            self.save_time_data.on_change('active', self.toggle_save)
             self.cluster_results.on_change('active', self.toggle_cluster)
             
         elif self.processor.dev is not None:
             self.sidebar_section = column(
                 header,
+                self.save_time_data,
+                self.data_folder_display,
                 self.x_input,
                 self.y_input,
                 self.z_input,
@@ -232,6 +242,7 @@ class Dashboard:
                 self.level_display
             )
             self.checkbox_group.on_change("active", self.toggle_visibility)
+            self.save_time_data.on_change('active', self.toggle_save)
             
         else:
             self.sidebar_section = self.no_array_text
@@ -326,6 +337,15 @@ class Dashboard:
     def toggle_cluster(self, attr, old, new):
         """Callback for the cluster results selector"""
         self.acoustic_camera_plot.cluster = new
+        
+    def toggle_save(self, attr, old, new):
+        """Callback for the cluster results selector"""
+        if new:
+            self.processor.log_data = False
+            self.data_folder_display.visible = False
+        else:
+            self.processor.log_data = True
+            self.data_folder_display.visible = True
             
     def stop_measurement(self):
         """Stop the current measurement"""
@@ -608,6 +628,7 @@ class Dashboard:
         self.y_input.disabled = True
         self.z_input.disabled = True
         self.threshold_input.disabled = True
+        self.save_time_data.disabled = True
         if self.model_on:
             self.csm_block_size_input.disabled = True
             self.min_queue_size_input.disabled = True
@@ -621,6 +642,7 @@ class Dashboard:
         self.y_input.disabled = False
         self.z_input.disabled = False
         self.threshold_input.disabled = False
+        self.save_time_data.disabled = False
         if self.model_on:
             self.csm_block_size_input.disabled = False
             self.min_queue_size_input.disabled = False

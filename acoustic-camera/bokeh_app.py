@@ -47,6 +47,7 @@ file_name = config.get("acoular.micgeom_file.file_name")
 micgeom_path = Path(ac.__file__).parent / base_path / file_name
     
 processor = Processor(
+    config,
     device_index,
     micgeom_path,
     results_folder,
