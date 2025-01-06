@@ -60,7 +60,7 @@ class AcousticCameraPlot:
         
         self.bar_low, self.bar_high = self.threshold, self.max_level
         
-        self.fig = self._create_plot()
+        self.fig, self.second_view = self._create_plot()
 
     def update_view_range(self, Z):
         self.xmin, self.xmax, self.ymin, self.ymax = self.calculate_view_range(Z)
@@ -92,31 +92,22 @@ class AcousticCameraPlot:
         z = np.array(model_data['z'])
         s = np.array(model_data['s'])
         
-        if len(z) > 0:
-            z_clipped = np.clip(z, self.min_distance, self.Z)
-            z_norm = (z_clipped - self.min_distance) / (self.Z - self.min_distance)
-            z_inverted = 1 - z_norm 
-            sizes = self.min_point_size + z_inverted * (self.max_point_size - self.min_point_size)
-        else:
-            sizes = []
-        
         mask = s >= self.threshold
         
-        x, y, z, s, sizes = x[mask], y[mask], z[mask], s[mask], sizes[mask]
+        x, y, z, s = x[mask], y[mask], z[mask], s[mask]
         
         if self.cluster and len(x) > 0:
-            x, y, z, s, sizes = self._cluster_points(x, y, z, s, sizes)
+            x, y, z, s = self._cluster_points(x, y, z, s)
 
-        self.model_cds.data = dict(x=x, y=y, z=z, s=s, sizes=sizes)
+        self.model_cds.data = dict(x=x, y=y, z=z, s=s)
         
-    def _cluster_points(self, x_list, y_list, z_list, s_list, sizes_list):
+    def _cluster_points(self, x_list, y_list, z_list, s_list):
         points = np.array(list(zip(x_list, y_list, z_list)))
         dist_matrix = squareform(pdist(points))
         close_points = dist_matrix < self.cluster_distance
         
         groups = []
         new_strengths = []
-        new_sizes = []
         visited = np.zeros(len(points), dtype=bool)
 
         for i in range(len(points)):
@@ -126,9 +117,7 @@ class AcousticCameraPlot:
                 group_mean = np.mean(group_points, axis=0)
                 groups.append(group_mean)
                 group_strength = np.mean(np.array(s_list)[group_indices])
-                group_size = np.mean(np.array(sizes_list)[group_indices])
                 new_strengths.append(group_strength)
-                new_sizes.append(group_size)
                 visited[group_indices] = True
 
         groups = np.array(groups)
@@ -136,7 +125,7 @@ class AcousticCameraPlot:
         y_result = groups[:, 1]
         z_result = groups[:, 2]
         
-        return x_result, y_result, z_result , new_strengths, new_sizes
+        return x_result, y_result, z_result , new_strengths
     
     def update_plot_beamforming(self, results):
         self.model_renderer.visible = False
@@ -152,11 +141,11 @@ class AcousticCameraPlot:
         
         self.beamforming_cds.data = {'beamformer_data': [beamforming_map_filt]}
 
-    # def update_plot_beamforming_dots(self, results):
-    #     self.model_renderer.visible = False
-    #     self.model_shadow_renderer.visible = False
-    #     max_x, max_y = results['max_x'], results['max_y']
-    #     self.beamforming_dot_cds.data = dict(x=max_x, y=max_y)
+    def update_plot_beamforming_dots(self, results):
+        self.model_renderer.visible = False
+        self.model_shadow_renderer.visible = False
+        max_x, max_y = results['max_x'], results['max_y']
+        self.beamforming_dot_cds.data = dict(x=max_x, y=max_y)
 
     def update_camera_image(self, img):
         self.camera_cds.data['image_data'] = [img]
@@ -232,8 +221,8 @@ class AcousticCameraPlot:
         fig.xaxis.visible = False 
         fig.yaxis.visible = False 
 
-        fig.xgrid.grid_line_color = None
-        fig.ygrid.grid_line_color = None
+        #fig.xgrid.grid_line_color = None
+        #fig.ygrid.grid_line_color = None
         
         fig.background_fill_alpha = 0
         fig.border_fill_alpha = 0
@@ -241,8 +230,21 @@ class AcousticCameraPlot:
     
         return fig
     
+    def _create_base_second_view(self):
+        second_view = figure(
+            tools="",
+            width=self.config.get("layout.second_plot.width"),
+            height=self.config.get("layout.second_plot.height"),
+            x_range=(self.xmin, self.xmax), 
+            y_range=(0.0, 2.5),
+            output_backend='webgl'
+        )
+        return second_view
+        
     def _create_plot(self):
         fig = self._create_base_fig()
+        
+        second_view = self._create_base_second_view()
         
         self.color_mapper = linear_cmap(
             's', 
@@ -266,7 +268,17 @@ class AcousticCameraPlot:
             x='x', 
             y='y',
             marker='circle', 
-            size='sizes', 
+            size=self.config.get('ui.dot_size'), 
+            color=self.color_mapper,
+            alpha=self.config.get('ui.dot_alpha'), 
+            source=self.model_cds
+        )
+        
+        self.second_model_renderer = second_view.scatter(
+            x='x', 
+            y='z',
+            marker='circle', 
+            size=self.config.get('ui.dot_size'), 
             color=self.color_mapper,
             alpha=self.config.get('ui.dot_alpha'), 
             source=self.model_cds
@@ -307,5 +319,5 @@ class AcousticCameraPlot:
 
         fig.add_layout(color_bar, 'right')  
         
-        return fig
-      
+        return fig, second_view
+    
