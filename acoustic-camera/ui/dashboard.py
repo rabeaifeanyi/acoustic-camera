@@ -8,7 +8,7 @@ from .plotting import AcousticCameraPlot
 
 
 class Dashboard:
-    def __init__(self, config, processor, model_on=False, alphas=None, video_stream=None, stream_on=False, ):
+    def __init__(self, config, processor, model_on=False, alphas=None, video_stream=None, stream_on=False):
         
         self.config = config
 
@@ -91,7 +91,7 @@ class Dashboard:
             self.deviation_cds = ColumnDataSource(data=dict(time=[], x_deviation=[], y_deviation=[], z_deviation=[]))
                 
             # Cluster distance input field
-            self.cluster_distance_input = TextInput(value=str(self.acoustic_camera_plot.min_cluster_distance), title="Cluster Distance")
+            self.cluster_distance_input = TextInput(value=str(self.acoustic_camera_plot.cluster_distance), title="Cluster Distance")
             
             # Threshold input field
             self.threshold_input = TextInput(value=str(self.acoustic_camera_plot.threshold), title="Threshold")
@@ -119,11 +119,10 @@ class Dashboard:
         self.setup_callbacks()
         
     def update_test_data(self):
-            if len(self.x_vals) > 100:  # Begrenzung der Datenpunkte
+            if len(self.x_vals) > 100:
                 self.x_vals = self.x_vals[1:]
                 self.y_vals = self.y_vals[1:]
-            
-            # Neue Daten hinzufügen
+
             self.x_vals.append(len(self.x_vals))
             self.y_vals.append(np.sin(len(self.x_vals) * 0.1))
             
@@ -191,25 +190,30 @@ class Dashboard:
         # Problem: When stop is pressed to quickly and model has not properly started, error occurs
         self.measurement_button = Button(label="Start")
         
+        self.model_params_column = column(self.cluster_results,
+                                   self.csm_block_size_input,
+                                   self.min_queue_size_input,
+                                   self.cluster_distance_input,
+                                   )
+        
         if self.model_on and self.processor.dev is not None:
             self.sidebar_section = column(
                 header,
                 self.method_selector,
-                self.cluster_results,
-                self.cluster_distance_input,
+                self.model_params_column,
                 self.x_input,
                 self.y_input,
                 self.z_input,
                 self.f_input,
-                self.csm_block_size_input,
-                self.min_queue_size_input,
                 self.threshold_input,
                 self.checkbox_group,
                 self.measurement_button,
-                self.overflow_status,
                 self.coordinates_display,
-                self.level_display
+                self.level_display,
+                self.overflow_status
             )
+            self.model_params_column.visible = False
+            self.overflow_status.visible = False
             self.checkbox_group.on_change("active", self.toggle_visibility)
             self.method_selector.on_change('active', self.toggle_method)
             self.cluster_results.on_change('active', self.toggle_cluster)
@@ -308,12 +312,16 @@ class Dashboard:
             self.method = 0
             self.estimation_callback = curdoc().add_periodic_callback(
                 self.update_estimations, self.estimation_update_interval)
+            self.model_params_column.visible = True
+            self.overflow_status.visible = True
         
         elif new == 1:
             print("Wechsel zu Beamforming")
             self.method = 1
             self.beamforming_callback = curdoc().add_periodic_callback(
                 self.update_beamforming, self.beamforming_update_interval)
+            self.model_params_column.visible = False
+            self.overflow_status.visible = False
             
     def toggle_cluster(self, attr, old, new):
         """Callback for the cluster results selector"""

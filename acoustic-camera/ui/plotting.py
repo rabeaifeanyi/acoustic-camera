@@ -1,9 +1,9 @@
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Arrow, VeeHead, ColorBar, LinearColorMapper
-from bokeh.palettes import Magma256
+from bokeh.models import ColumnDataSource, Arrow, VeeHead, ColorBar, LinearColorMapper #type:ignore
+from bokeh.palettes import Turbo256
 from bokeh.transform import linear_cmap
 import numpy as np
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist, squareform #type:ignore
 
 
 class AcousticCameraPlot:
@@ -19,9 +19,8 @@ class AcousticCameraPlot:
         self.frame_width = int(frame_width)
         self.frame_height = int(frame_height)
         
-        self.min_cluster_distance = 0
-        
-        self.cluster = 0
+        self.cluster_distance = self.config.get('app_default_settings.cluster_distance')
+        self.cluster = 1
    
         self.max_level = max_level
         
@@ -52,11 +51,10 @@ class AcousticCameraPlot:
         
         # Data source for the beamforming data
         self.beamforming_cds = ColumnDataSource({'beamformer_data': []})    
-        
         self.beamforming_dot_cds = ColumnDataSource(data=dict(x=[], y=[]))
         
-        self.x_min, self.y_min = -1.5, -1.5
-        self.x_max, self.y_max = 1.5, 1.5
+        self.x_min, self.y_min = self.config.get("beamforming.xmin"), self.config.get("beamforming.ymin")
+        self.x_max, self.y_max = self.config.get("beamforming.xmax"), self.config.get("beamforming.ymax")
         self.dx = self.x_max - self.x_min
         self.dy = self.y_max - self.y_min
         
@@ -75,7 +73,7 @@ class AcousticCameraPlot:
         self.threshold = threshold
         
     def update_min_cluster_distance(self, distance):
-        self.min_cluster_distance = distance
+        self.cluster_distance = distance
 
     def calculate_view_range(self, Z):
         xmax = Z * np.tan(self.alpha_x / 2)
@@ -86,6 +84,7 @@ class AcousticCameraPlot:
 
     def update_plot_model(self, model_data):
         self.model_renderer.visible = True
+        self.model_shadow_renderer.visible = True
         self.beamforming_renderer.visible = False
         
         x = np.array(model_data['x'])
@@ -115,7 +114,7 @@ class AcousticCameraPlot:
     def cluster_points(self, x_list, y_list, z_list, s_list, sizes_list):
         points = np.array(list(zip(x_list, y_list, z_list)))
         dist_matrix = squareform(pdist(points))
-        close_points = dist_matrix < self.min_cluster_distance
+        close_points = dist_matrix < self.cluster_distance
         
         groups = []
         new_strengths = []
@@ -143,15 +142,22 @@ class AcousticCameraPlot:
     
     def update_plot_beamforming(self, results):
         self.model_renderer.visible = False
+        self.model_shadow_renderer.visible = False
         self.beamforming_renderer.visible = True
 
         beamforming_map = results['results']
-        self.beamforming_cds.data = {'beamformer_data': [beamforming_map]}
+        beamforming_map_filt = np.where(
+            beamforming_map >= self.threshold,
+            beamforming_map,                    
+            np.nan       
+        )
+        self.beamforming_cds.data = {'beamformer_data': [beamforming_map_filt]}
 
-    def update_plot_beamforming_dots(self, results):
-        self.model_renderer.visible = False
-        max_x, max_y = results['max_x'], results['max_y']
-        self.beamforming_dot_cds.data = dict(x=max_x, y=max_y)
+    # def update_plot_beamforming_dots(self, results):
+    #     self.model_renderer.visible = False
+    #     self.model_shadow_renderer.visible = False
+    #     max_x, max_y = results['max_x'], results['max_y']
+    #     self.beamforming_dot_cds.data = dict(x=max_x, y=max_y)
 
     def update_camera_image(self, img):
         self.camera_cds.data['image_data'] = [img]
@@ -168,9 +174,7 @@ class AcousticCameraPlot:
             self.arrow_y.visible = visible
             
     def _create_base_fig(self):
-        # TODO find out how to set exact positions
-        # frame_width causes problems when embedded with flask
-        fig = figure(width=900,
+        fig = figure(width=900, # Attention! Param frame_width causes problems when embedded with flask
                      height=600,
                      x_range=(self.xmin, self.xmax), 
                      y_range=(self.ymin, self.ymax),
@@ -228,7 +232,17 @@ class AcousticCameraPlot:
     def _create_plot(self):
         fig = self._create_base_fig()
         
-        self.color_mapper = linear_cmap('s', Magma256[::-1], self.bar_low, self.bar_high)
+        self.color_mapper = linear_cmap('s', Turbo256, self.bar_low, self.bar_high, nan_color="white")
+        
+        self.model_shadow_renderer = fig.scatter(
+            x='x', 
+            y='y',
+            marker='circle', 
+            size=self.config.get('ui.shadow_size'), 
+            color=self.config.get('ui.shadow_color'),
+            alpha=self.config.get('ui.shadow_alpha'), 
+            source=self.model_cds
+        )
         
         self.model_renderer = fig.scatter(
             x='x', 
@@ -239,8 +253,8 @@ class AcousticCameraPlot:
             alpha=self.config.get('ui.dot_alpha'), 
             source=self.model_cds
         )
-
-        self.b_color_mapper = LinearColorMapper(palette=Magma256[::-1], low=self.bar_low, high=self.bar_high)
+        
+        self.b_color_mapper = LinearColorMapper(palette=Turbo256, low=self.bar_low, high=self.bar_high, nan_color="white")
        
         self.beamforming_renderer = fig.image(
             image='beamformer_data',

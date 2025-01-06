@@ -12,6 +12,7 @@
     "app_default_settings": {
         "threshold": 40,
         "min_distance": 1,
+        "cluster_distance": 0.6,
         "x": 0.0,
         "y": 0.0,
         "z": 1.5
@@ -44,9 +45,10 @@
         "slider_bar_color": "#95a5a6",
         "dot_color": "#e63704",
         "dot_size": 4,
-        "dot_alpha": 0.8,
-        "shadow_color": "#ffbb38",
-        "shadow_alpha": 0.4,
+        "dot_alpha": 1.0,
+        "shadow_color": "#ffffff",
+        "shadow_alpha": 0.6,
+        "shadow_size": 16,
         "video_alpha": 0.75,
         "mic_color": "#54a6ff",
         "mic_line_color": "#2c3e50",
@@ -78,5 +80,14 @@
             "base_path": "xml",
             "file_name": "minidsp_uma-16_mirrored.xml"
         }
+    },
+    "beamforming": {
+        "window": "Hanning",
+        "overlap": "50%",
+        "block_size": 128,
+        "xmin": -1.5,
+        "xmax": 1.5,
+        "ymin": -1.5,
+        "ymax": 1.5
     }
 }

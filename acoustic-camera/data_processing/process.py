@@ -1,11 +1,11 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-import tensorflow as tf
+import tensorflow as tf #type: ignore
 import numpy as np
 import acoular as ac
 import datetime
-import h5py 
+import h5py #type: ignore
 import csv
 from threading import Event, Lock, Thread
 from queue import Queue
@@ -14,7 +14,7 @@ import queue
 
 from .SamplesProcessor import LastInOut # TODO
 
-ac.config.global_caching = "none"
+ac.config.global_caching = "none" #type: ignore
 
 
 class Processor:
