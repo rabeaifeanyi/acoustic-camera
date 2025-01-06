@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1' #Severe calculation inaccuracies with some GPUs 
 
 import tensorflow as tf #type: ignore
 import numpy as np
@@ -12,16 +12,21 @@ from queue import Queue
 import time
 import queue
 
+from config import ConfigManager
+
 from .SamplesProcessor import LastInOut # TODO
+
 
 ac.config.global_caching = "none" #type: ignore
 
 
 class Processor:
-    def __init__(self, device_index, micgeom_path, results_folder, ckpt_path=None, model_on=False, z=1.5,
+    def __init__(self, config, device_index, micgeom_path, results_folder, ckpt_path=None, model_on=False, z=1.5,
                  csm_block_size=256, csm_min_queue_size=60, csm_buffer_size=1000):
         """ Processor for the UMA16 Acoustic Camera
         """
+        self.config = config
+        
         # Device index for the sound device (UMA16 or other microphone array)
         self.device = device_index
         
@@ -33,12 +38,12 @@ class Processor:
         self.mics = ac.MicGeom(from_file=micgeom_path)
         
         # Dimensions of the beamforming grid
-        self.x_min, self.x_max = -1.5, 1.5
-        self.y_min, self.y_max = -1.5, 1.5
-        self.z_min, self.z_max = 0.5, 2.5
+        self.x_min, self.x_max = self.config.get('beamforming.xmin'), self.config.get('beamforming.xmax')
+        self.y_min, self.y_max = self.config.get('beamforming.ymin'), self.config.get('beamforming.ymax')
+        self.z_min, self.z_max = self.config.get('beamforming.zmin'), self.config.get('beamforming.zmax')
 
         # increment for the grid
-        self.increment = 0.05
+        self.increment = self.config.get('beamforming.increment')  
         
         self.beamforming_grid = ac.RectGrid(x_min=self.x_min, x_max=self.x_max, y_min=self.y_min, y_max=self.y_max, z=z, increment=self.increment)
         #self.beamforming_grid_2d = ac.RectGrid(x_min=self.x_min, x_max=self.x_max, y_min=self.y_min, y_max=self.y_max, z_min=self.z_min, z_max=self.z_max, increment=self.increment)
@@ -46,7 +51,7 @@ class Processor:
         self.grid_dim = (int((self.x_max - self.x_min) / self.increment + 1), int((self.y_max - self.y_min) / self.increment + 1))
         
         # Default target frequency
-        self.frequency = 4000.0
+        self.frequency = self.config.get('beamforming.frequency')
         
         # Locks for adjustable parameters
         self.frequency_lock = Lock()

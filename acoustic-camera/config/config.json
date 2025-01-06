@@ -59,9 +59,6 @@
         "origin_color": "#54a6ff",
         "origin_line_width": 1,
         "origin_head_size": 8,
-        "figure_width": 800,
-        "figure_height": 600,
-        "sidebar_width": 300,
         "start_text": "Start",
         "stop_text": "Stop"
     },
@@ -85,9 +82,13 @@
         "window": "Hanning",
         "overlap": "50%",
         "block_size": 128,
+        "increment": 0.05,
+        "frequency": 4000.0,
         "xmin": -1.5,
         "xmax": 1.5,
         "ymin": -1.5,
-        "ymax": 1.5
+        "ymax": 1.5,
+        "zmin": 0.5,
+        "zmax": 2.5
     }
 }
