@@ -94,10 +94,8 @@ class AcousticCameraPlot:
         
         if len(z) > 0:
             z_clipped = np.clip(z, self.min_distance, self.Z)
-            
             z_norm = (z_clipped - self.min_distance) / (self.Z - self.min_distance)
             z_inverted = 1 - z_norm 
-            
             sizes = self.min_point_size + z_inverted * (self.max_point_size - self.min_point_size)
         else:
             sizes = []
@@ -107,11 +105,11 @@ class AcousticCameraPlot:
         x, y, z, s, sizes = x[mask], y[mask], z[mask], s[mask], sizes[mask]
         
         if self.cluster and len(x) > 0:
-            x, y, z, s, sizes = self.cluster_points(x, y, z, s, sizes)
+            x, y, z, s, sizes = self._cluster_points(x, y, z, s, sizes)
 
         self.model_cds.data = dict(x=x, y=y, z=z, s=s, sizes=sizes)
         
-    def cluster_points(self, x_list, y_list, z_list, s_list, sizes_list):
+    def _cluster_points(self, x_list, y_list, z_list, s_list, sizes_list):
         points = np.array(list(zip(x_list, y_list, z_list)))
         dist_matrix = squareform(pdist(points))
         close_points = dist_matrix < self.cluster_distance
@@ -151,6 +149,7 @@ class AcousticCameraPlot:
             beamforming_map,                    
             np.nan       
         )
+        
         self.beamforming_cds.data = {'beamformer_data': [beamforming_map_filt]}
 
     # def update_plot_beamforming_dots(self, results):
@@ -174,48 +173,60 @@ class AcousticCameraPlot:
             self.arrow_y.visible = visible
             
     def _create_base_fig(self):
-        fig = figure(tools="",
-                     width=900, # Attention! Param frame_width causes problems when embedded with flask
-                     height=600,
-                     x_range=(self.xmin, self.xmax), 
-                     y_range=(self.ymin, self.ymax),
-                     output_backend='webgl')
+        fig = figure(
+            tools="",
+            width=900, # Attention! Param frame_width causes problems when embedded with flask
+            height=600,
+            x_range=(self.xmin, self.xmax), 
+            y_range=(self.ymin, self.ymax),
+            output_backend='webgl'
+        )
 
-        fig.image_rgba(image='image_data', 
-                    x=self.xmin, 
-                    y=self.ymin, 
-                    dw=(self.xmax-self.xmin), 
-                    dh=(self.ymax-self.ymin), 
-                    source=self.camera_cds, 
-                    alpha=self.config.get('ui.video_alpha'))
+        fig.image_rgba(
+            image='image_data', 
+            x=self.xmin, 
+            y=self.ymin, 
+            dw=(self.xmax-self.xmin), 
+            dh=(self.ymax-self.ymin), 
+            source=self.camera_cds, 
+            alpha=self.config.get('ui.video_alpha')
+        )
         
         self.mic_cds.data = dict(x=self.mic_positions[0], y=self.mic_positions[1])
         
-        fig.scatter(x='x', 
-                    y='y',
-                    marker='circle', 
-                    size=self.config.get('ui.mic_size'), 
-                    color=self.config.get('ui.mic_color'), 
-                    line_color=self.config.get('ui.mic_line_color'),
-                    alpha=self.config.get('ui.mic_alpha'), 
-                    source=self.mic_cds)
+        fig.scatter(
+            x='x', 
+            y='y',
+            marker='circle', 
+            size=self.config.get('ui.mic_size'), 
+            color=self.config.get('ui.mic_color'), 
+            line_color=self.config.get('ui.mic_line_color'),
+            alpha=self.config.get('ui.mic_alpha'), 
+            source=self.mic_cds
+        )
         
-        self.arrow_x = Arrow(end=VeeHead(size=self.config.get('ui.origin_head_size'),fill_color=self.config.get('ui.origin_color'), line_color=self.config.get('ui.origin_color')), 
-                             x_start=0, 
-                             y_start=0, 
-                             x_end=self.config.get('ui.origin_length'), 
-                             y_end=0, 
-                             line_width=self.config.get('ui.origin_line_width'),
-                             line_color=self.config.get('ui.origin_color'))
+        self.arrow_x = Arrow(
+            end=VeeHead(size=self.config.get('ui.origin_head_size'),fill_color=self.config.get('ui.origin_color'), line_color=self.config.get('ui.origin_color')), 
+            x_start=0, 
+            y_start=0, 
+            x_end=self.config.get('ui.origin_length'), 
+            y_end=0, 
+            line_width=self.config.get('ui.origin_line_width'),
+            line_color=self.config.get('ui.origin_color')
+        )
+        
         fig.add_layout(self.arrow_x)
         
-        self.arrow_y = Arrow(end=VeeHead(size=self.config.get('ui.origin_head_size'), fill_color=self.config.get('ui.origin_color'), line_color=self.config.get('ui.origin_color')), 
-                             x_start=0, 
-                             y_start=0, 
-                             x_end=0, 
-                             y_end=self.config.get('ui.origin_length'), 
-                             line_width=self.config.get('ui.origin_line_width'),
-                             line_color=self.config.get('ui.origin_color'))
+        self.arrow_y = Arrow(
+            end=VeeHead(size=self.config.get('ui.origin_head_size'), fill_color=self.config.get('ui.origin_color'), line_color=self.config.get('ui.origin_color')), 
+            x_start=0, 
+            y_start=0, 
+            x_end=0, 
+            y_end=self.config.get('ui.origin_length'), 
+            line_width=self.config.get('ui.origin_line_width'),
+            line_color=self.config.get('ui.origin_color')
+        )
+        
         fig.add_layout(self.arrow_y)
         
         fig.xaxis.visible = False 
@@ -233,7 +244,13 @@ class AcousticCameraPlot:
     def _create_plot(self):
         fig = self._create_base_fig()
         
-        self.color_mapper = linear_cmap('s', Turbo256, self.bar_low, self.bar_high, nan_color="white")
+        self.color_mapper = linear_cmap(
+            's', 
+            Turbo256, 
+            self.bar_low, 
+            self.bar_high, 
+            nan_color="white"
+        )
         
         self.model_shadow_renderer = fig.scatter(
             x='x', 
@@ -255,7 +272,12 @@ class AcousticCameraPlot:
             source=self.model_cds
         )
         
-        self.b_color_mapper = LinearColorMapper(palette=Turbo256, low=self.bar_low, high=self.bar_high, nan_color="white")
+        self.b_color_mapper = LinearColorMapper(
+            palette=Turbo256, 
+            low=self.bar_low, 
+            high=self.bar_high, 
+            nan_color="white"
+        )
        
         self.beamforming_renderer = fig.image(
             image='beamformer_data',
