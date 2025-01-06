@@ -174,7 +174,8 @@ class AcousticCameraPlot:
             self.arrow_y.visible = visible
             
     def _create_base_fig(self):
-        fig = figure(width=900, # Attention! Param frame_width causes problems when embedded with flask
+        fig = figure(tools="",
+                     width=900, # Attention! Param frame_width causes problems when embedded with flask
                      height=600,
                      x_range=(self.xmin, self.xmax), 
                      y_range=(self.ymin, self.ymax),

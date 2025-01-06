@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bokeh Dashboard with Video</title>
+    <title>Acoustic Camera</title>
     <style>
         body, html {
             margin: 0;
@@ -16,10 +16,10 @@
 
         #video-container {
             position: absolute;
-            top: 33px;
-            left: 315px;
-            width: 810px;
-            height: 590px;
+            top:  {{ json_data['layout']['video']['y'] }}px;
+            left: {{ json_data['layout']['video']['x'] }}px;
+            width: {{ json_data['layout']['video']['width'] }}px;
+            height: {{ json_data['layout']['video']['height'] }}px;
             z-index: 1; 
         }
 

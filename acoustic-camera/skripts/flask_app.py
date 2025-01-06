@@ -29,7 +29,7 @@ def index():
     bokeh_script = server_document("http://localhost:5006/bokeh_app")
     with open('config/config.json', 'r') as f:
         config = json.load(f)
-    return render_template('index.html', bokeh_script=bokeh_script, config=config)
+    return render_template('index.html', bokeh_script=bokeh_script, json_data=config)
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

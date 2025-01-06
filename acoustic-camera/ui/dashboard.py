@@ -462,7 +462,7 @@ class Dashboard:
         self.overflow_status.text = status_text
         
     def _create_deviation_plot(self):
-        self.deviation_plot = figure(width=600, height=220, title="Live Deviation Plot")
+        self.deviation_plot = figure(tools="",width=600, height=220, title="Live Deviation Plot")
         self.deviation_plot.line(x='time', y='x_deviation', source=self.deviation_cds, color="blue", legend_label="X Deviation")
         self.deviation_plot.line(x='time', y='y_deviation', source=self.deviation_cds, color="green", legend_label="Y Deviation")
         self.deviation_plot.line(x='time', y='z_deviation', source=self.deviation_cds, color="red", legend_label="Z Deviation")
