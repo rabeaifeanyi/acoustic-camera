@@ -27,12 +27,27 @@
         "plot": {
             "width": 900,
             "x": 300,
-            "y": 100
+            "y": 100,
+            "axis": false,
+            "grid": false
         },
         "sidebar": {
             "width": 260,
+            "content_width": 230,
             "x": 0,
             "y": 0
+        },
+        "second_plot": {
+            "width": 600,
+            "height": 600,
+            "axis": true,
+            "grid": false
+        },
+        "deviation": {
+            "width": 600,
+            "height": 200,
+            "axis": true,
+            "grid": true
         }
     },
     "ui": {
@@ -44,10 +59,10 @@
         "slider_background": "#f7f7f7",
         "slider_bar_color": "#95a5a6",
         "dot_color": "#e63704",
-        "dot_size": 4,
+        "dot_size": 9,
         "dot_alpha": 1.0,
         "shadow_color": "#ffffff",
-        "shadow_alpha": 0.6,
+        "shadow_alpha": 0.4,
         "shadow_size": 16,
         "video_alpha": 0.75,
         "mic_color": "#54a6ff",
