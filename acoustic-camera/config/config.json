@@ -27,7 +27,9 @@
         "plot": {
             "width": 900,
             "x": 300,
-            "y": 100
+            "y": 100,
+            "axis": false,
+            "grid": false
         },
         "sidebar": {
             "width": 260,
@@ -37,11 +39,15 @@
         },
         "second_plot": {
             "width": 600,
-            "height": 500
+            "height": 600,
+            "axis": true,
+            "grid": false
         },
         "deviation": {
-            "width": 850,
-            "height": 200
+            "width": 600,
+            "height": 200,
+            "axis": true,
+            "grid": true
         }
     },
     "ui": {
