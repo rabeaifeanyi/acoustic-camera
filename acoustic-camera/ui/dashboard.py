@@ -49,8 +49,8 @@ class Dashboard:
             alphas=alphas
         )    
         
-        self.acoustic_camera_plot.fig.output_backend = "webgl" 
-        self.acoustic_camera_plot.second_view.output_backend = "webgl"
+        #self.acoustic_camera_plot.fig.output_backend = "webgl" 
+        #self.acoustic_camera_plot.second_view.output_backend = "webgl"
 
         # Setting up the update intervals
         self.estimation_update_interval = self.config.get('app_settings.estimation_update_interval')
@@ -106,7 +106,7 @@ class Dashboard:
             self.data_folder_display.visible = False
                 
             # Coordinates
-            self.coordinates_display = Div(text="", width=inside_width)
+            self.coordinates_display = Div(text="", width=600, height=100)
                 
             # Plot of the deviation of the estimated position
             self.deviation_cds = ColumnDataSource(data=dict(time=[], x_deviation=[], y_deviation=[], z_deviation=[]))
@@ -126,7 +126,7 @@ class Dashboard:
             )
                                                         
             # Level display
-            self.level_display = Div(text="", width=inside_width)
+            self.level_display = Div(text="", width=600, height=30)
         
         else:
             # Text telling there is no Microphone Array connected
