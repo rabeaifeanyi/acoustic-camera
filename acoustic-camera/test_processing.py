@@ -42,12 +42,12 @@ def update_overflow_status():
 # time.sleep(1)
 # processor.stop_beamforming()
 
-# processor.start_model()
-# for i in range(10):
-#     time.sleep(1)
-#     update_overflow_status()
-# processor.stop_model()
+processor.start_model()
+for i in range(10):
+    time.sleep(1)
+    update_overflow_status()
+processor.stop_model()
 
 processor.start_beamforming()
-time.sleep(5)
+time.sleep(2)
 processor.stop_beamforming()
