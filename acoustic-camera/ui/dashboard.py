@@ -2,7 +2,7 @@ import threading
 import numpy as np
 import datetime
 from bokeh.layouts import column, layout, row
-from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource #type:ignore
+from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource, Spacer #type:ignore
 from bokeh.plotting import curdoc, figure
 from .plotting import AcousticCameraPlot
 
@@ -46,10 +46,8 @@ class Dashboard:
             frame_width=self.frame_width,
             frame_height=self.frame_height,
             mic_positions=processor.mics.mpos,
-            alphas=alphas,
+            alphas=alphas
         )    
-        
-        self.acoustic_camera_plot.fig.output_backend = "webgl" 
 
         # Setting up the update intervals
         self.estimation_update_interval = self.config.get('app_settings.estimation_update_interval')
@@ -63,50 +61,73 @@ class Dashboard:
         self.real_z = self.config.get('app_default_settings.z')
         
         if processor.dev is not None:
+            inside_width = self.config.get('layout.sidebar.content_width')
+    
             # Frequency input field
-            self.f_input = TextInput(value=str(self.processor.frequency), title="Frequency (Hz)")
+            self.f_input = TextInput(value=str(self.processor.frequency), title="Frequency (Hz)", width=inside_width)
             
             # Real coordinates input fields    
-            self.x_input = TextInput(value=str(self.real_x), title="Real X")
-            self.y_input = TextInput(value=str(self.real_y), title="Real Y")
-            self.z_input = TextInput(value=str(self.real_z), title="Real Z")
+            self.x_input = TextInput(value=str(self.real_x), title="Real X", width=inside_width)
+            self.y_input = TextInput(value=str(self.real_y), title="Real Y", width=inside_width)
+            self.z_input = TextInput(value=str(self.real_z), title="Real Z", width=inside_width)
 
             if self.model_on:
-                self.csm_block_size_input = TextInput(value=str(self.processor.csm_block_size), title="CSM Block Size")
-                self.min_queue_size_input = TextInput(value=str(self.processor.min_queue_size), title="Minimum Queue Size")
+                self.csm_block_size_input = TextInput(value=str(self.processor.csm_block_size), title="CSM Block Size", width=inside_width)
+                self.min_queue_size_input = TextInput(value=str(self.processor.min_queue_size), title="Minimum Queue Size", width=inside_width)
                 
                 # Overflow status text
-                self.overflow_status = Div(text="Overflow Status: Unknown", width=300, height=30)
+                self.overflow_status = Div(text="Overflow Status: Unknown", height=30, width=inside_width)
                 
                 # Start text for the measurement button
-                self.cluster_results = RadioButtonGroup(labels=["Show all Results", "Cluster"], active=self.acoustic_camera_plot.cluster) 
+                self.cluster_results = RadioButtonGroup(
+                    labels=["Show all Results", "Cluster"], 
+                    active=self.acoustic_camera_plot.cluster,
+                    width=inside_width
+                ) 
             
                 # Switching between Deep Learning and Beamforming
-                self.method_selector = RadioButtonGroup(labels=["Deep Learning", "Beamforming"], active=self.method)  # 0 is "Deep Learning" as default
+                self.method_selector = RadioButtonGroup(
+                    labels=["Deep Learning", "Beamforming"], 
+                    active=self.method,
+                    width=inside_width
+                )  # 0 is "Deep Learning" as default
 
             # Switch for saving the data
-            self.save_time_data = RadioButtonGroup(labels=["Save Time Data", "Discard"], active=1)
-            self.data_folder_display = Div(text=f"Saving data to: {self.processor.results_folder}", width=self.config.get('layout.sidebar.width'))
+            self.save_time_data = RadioButtonGroup(
+                labels=["Save Time Data", "Discard"], 
+                active=1, 
+                width=inside_width
+            )
+            
+            self.data_folder_display = Div(text=f"Saving data to: {self.processor.results_folder}", width=inside_width)
             self.data_folder_display.visible = False
                 
             # Coordinates
-            self.coordinates_display = Div(text="", width=self.config.get('layout.sidebar.width'))
+            self.coordinates_display = Div(text="", width=600, height=100)
                 
             # Plot of the deviation of the estimated position
             self.deviation_cds = ColumnDataSource(data=dict(time=[], x_deviation=[], y_deviation=[], z_deviation=[]))
                 
             # Cluster distance input field
-            self.cluster_distance_input = TextInput(value=str(self.acoustic_camera_plot.cluster_distance), title="Cluster Distance")
+            self.cluster_distance_input = TextInput(
+                value=str(self.acoustic_camera_plot.cluster_distance), 
+                title="Cluster Distance", 
+                width=inside_width
+            )
             
             # Threshold input field
-            self.threshold_input = TextInput(value=str(self.acoustic_camera_plot.threshold), title="Threshold")
+            self.threshold_input = TextInput(
+                value=str(self.acoustic_camera_plot.threshold), 
+                title="Threshold", 
+                width=inside_width
+            )
                                                         
             # Level display
-            self.level_display = Div(text="", width=self.config.get('layout.sidebar.width'))
+            self.level_display = Div(text="", width=600, height=30)
         
         else:
             # Text telling there is no Microphone Array connected
-            self.no_array_text = Div(text="No Microphone Array connected", width=self.config.get('layout.sidebar.width'))
+            self.no_array_text = Div(text="No Microphone Array connected", width=inside_width)
             
         # Callbacks
         self.camera_view_callback = None
@@ -122,6 +143,10 @@ class Dashboard:
         
         # Setting up the callbacks
         self.setup_callbacks()
+        
+        if self.method == 1:
+            self.deviation_plot.visible = False
+            self.acoustic_camera_plot.second_view.visible = False
         
     def update_test_data(self):
             if len(self.x_vals) > 100:
@@ -151,7 +176,7 @@ class Dashboard:
                     height: 100%;
                     width: {self.config.get('layout.sidebar.width')}px;
                     background-color: {self.config.get('ui.sidebar_color')};
-                    padding: 0px;
+                    padding: 20px;
                     box-sizing: border-box;
                     overflow: hidden;
                 }}
@@ -163,35 +188,33 @@ class Dashboard:
                 position: fixed; 
                 top: {self.config.get('layout.sidebar.y')}px; 
                 left: {self.config.get('layout.sidebar.width')}px;  
-                width: calc(100% - {self.config.get('layout.sidebar.width')}px); 
+                width: 1800px; 
                 height: 100%; 
                 overflow: hidden; 
                 box-sizing: border-box;">
             </div>
             """
             
-        plot_style = f"""
-            <style>
-                #plot {{
-                    position: fixed;
-                    top: {self.config.get('layout.plot.y')}px;
-                    left: {self.config.get('layout.plot.x')}px;
-                    width: calc(100% - 260px);
-                    height: 100%;
-                    overflow: hidden;
-                    box-sizing: border-box;
-                }}
-            </style>
+        content_layout_style_second = f"""
+            <div style="
+                position: fixed; 
+                top: {self.config.get('layout.sidebar.y')}px; 
+                left: {self.config.get('layout.sidebar.width')}px;  
+                width: 100%-1340px; 
+                height: 100%; 
+                overflow: hidden; 
+                box-sizing: border-box;">
+            </div>
             """
-
-        
+            
+        sidebar_spacer = Spacer(width=self.config.get('layout.sidebar.width')-self.config.get('layout.sidebar.content_width'))
         # Header "Acoustic Camera"
         header = Div(text=f"<h2 style='color:{self.config.get('ui.font_color')}; font-family:{self.config.get('ui.font')}; '>Acoustic Camera</h2>") #margin-left: 20px
         
         # Checkboxes for origin and mic-geom visibility
-        self.microphone_checkboxes = CheckboxGroup(labels=["Show Microphone Geometry", "Show Origin"], active=[0, 1])
+        self.microphone_checkboxes = CheckboxGroup(labels=["Show Microphone Geometry", "Show Origin"], active=[0, 1])#, width=self.config.get('layout.sidebar.width'))
         
-        self.saving_options = CheckboxGroup(labels=["Save Results as H5", "Save Results as CSV"], active=[])
+        self.saving_options = CheckboxGroup(labels=["Save Results as H5", "Save Results as CSV"], active=[])#, width=self.config.get('layout.sidebar.width'))
 
         # Measurement button
         # Problem: When stop is pressed to quickly and model has not properly started, error occurs
@@ -218,10 +241,7 @@ class Dashboard:
                 self.f_input,
                 self.threshold_input,
                 self.microphone_checkboxes,
-                self.measurement_button,
-                self.coordinates_display,
-                self.level_display,
-                self.overflow_status
+                self.measurement_button
             )
             self.model_params_column.visible = False
             self.overflow_status.visible = False
@@ -242,9 +262,7 @@ class Dashboard:
                 self.f_input,
                 self.threshold_input,
                 self.microphone_checkboxes,
-                self.measurement_button,
-                self.coordinates_display,
-                self.level_display
+                self.measurement_button
             )
             self.microphone_checkboxes.on_change("active", self.toggle_visibility)
             self.save_time_data.on_change('active', self.toggle_save)
@@ -254,7 +272,7 @@ class Dashboard:
        
         # Sidebar Column    
         sidebar = column(
-            Div(text=f"{sidebar_style}<div id='sidebar'></div>"),#, width=self.config.get("layout.sidebar.width")),
+            Div(text=f"{sidebar_style}<div id='sidebar'></div>"),
             self.sidebar_section
         )
         
@@ -263,17 +281,33 @@ class Dashboard:
             content_layout = column(
                 Div(text=f"{content_layout_style}"),
                 self.acoustic_camera_plot.fig,
-                self.deviation_plot,
+                self.coordinates_display,
+                self.level_display,
+                self.overflow_status
             )
-        else:
+        
+        elif self.processor.dev is not None:
             content_layout = column(
                 Div(text=f"{content_layout_style}"),
                 self.acoustic_camera_plot.fig,
+                self.coordinates_display,
+                self.level_display
             )
-
-        # Main dashboard layout
+            
+        else:
+            content_layout = column(
+                Div(text=f"{content_layout_style}"),
+                self.acoustic_camera_plot.fig
+            )
+            
+        second_layout = column(
+            Div(text=f"{content_layout_style_second}"),
+            self.acoustic_camera_plot.second_view,
+            self.deviation_plot
+        )
+        
         self.dashboard_layout = layout(
-            row(sidebar, content_layout),
+            row(sidebar, sidebar_spacer, content_layout, second_layout),
             background=self.config.get("ui.background"),
             sizing_mode="scale_height"
         )
@@ -330,6 +364,8 @@ class Dashboard:
                 self.update_estimations, self.estimation_update_interval)
             self.model_params_column.visible = True
             self.overflow_status.visible = True
+            self.acoustic_camera_plot.second_view.visible = True
+            self.deviation_plot.visible = True
         
         elif new == 1:
             print("Wechsel zu Beamforming")
@@ -338,6 +374,8 @@ class Dashboard:
                 self.update_beamforming, self.beamforming_update_interval)
             self.model_params_column.visible = False
             self.overflow_status.visible = False
+            self.acoustic_camera_plot.second_view.visible = False
+            self.deviation_plot.visible = False
             
     def toggle_cluster(self, attr, old, new):
         """Callback for the cluster results selector"""
@@ -356,6 +394,7 @@ class Dashboard:
         """Stop the current measurement"""
         if self.model_thread is not None:
             self.stop_model()
+            self._reset_deviation()
             self.measurement_button.label = self.config.get("ui.start_text")
         
         if self.beamforming_thread is not None:
@@ -467,12 +506,19 @@ class Dashboard:
         self.overflow_status.text = status_text
         
     def _create_deviation_plot(self):
-        self.deviation_plot = figure(tools="",width=600, height=220, title="Live Deviation Plot")
+        self.deviation_plot = figure(tools="",width=self.config.get("layout.deviation.width"), height=self.config.get("layout.deviation.height"), title="Live Deviation Plot")
         self.deviation_plot.line(x='time', y='x_deviation', source=self.deviation_cds, color="blue", legend_label="X Deviation")
         self.deviation_plot.line(x='time', y='y_deviation', source=self.deviation_cds, color="green", legend_label="Y Deviation")
-        self.deviation_plot.line(x='time', y='z_deviation', source=self.deviation_cds, color="red", legend_label="Z Deviation")
+        self.deviation_plot.line(x='time', y='z_deviation', source=self.deviation_cds, color="black", legend_label="Z Deviation")
         self.deviation_plot.background_fill_color = self.config.get("ui.background_color")
         self.deviation_plot.border_fill_color = self.config.get("ui.background_color")
+        
+        self.deviation_plot.xaxis.visible = self.config.get('layout.deviation.axis') 
+        self.deviation_plot.yaxis.visible = self.config.get('layout.deviation.axis') 
+
+        if not self.config.get('layout.deviation.grid'):
+            self.deviation_plot.xgrid.grid_line_color = None
+            self.deviation_plot.ygrid.grid_line_color = None
         
     def _get_result_filenames(self):
         """ Get the filenames for the results
@@ -585,6 +631,15 @@ class Dashboard:
         )
     
         self.deviation_cds.stream(new_deviation_data, rollover=200)
+        
+    def _reset_deviation(self):
+        #TODO fix this after Model Overflow Problem is fixed
+        self.deviation_cds.data = dict(
+            time=[],
+            x_deviation=[],
+            y_deviation=[],
+            z_deviation=[]
+        )
             
     def start_beamforming(self):
         if self.beamforming_thread is None:
