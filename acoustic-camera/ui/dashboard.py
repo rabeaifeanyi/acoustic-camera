@@ -48,9 +48,6 @@ class Dashboard:
             mic_positions=processor.mics.mpos,
             alphas=alphas
         )    
-        
-        #self.acoustic_camera_plot.fig.output_backend = "webgl" 
-        #self.acoustic_camera_plot.second_view.output_backend = "webgl"
 
         # Setting up the update intervals
         self.estimation_update_interval = self.config.get('app_settings.estimation_update_interval')
@@ -397,6 +394,7 @@ class Dashboard:
         """Stop the current measurement"""
         if self.model_thread is not None:
             self.stop_model()
+            self._reset_deviation()
             self.measurement_button.label = self.config.get("ui.start_text")
         
         if self.beamforming_thread is not None:
@@ -633,6 +631,15 @@ class Dashboard:
         )
     
         self.deviation_cds.stream(new_deviation_data, rollover=200)
+        
+    def _reset_deviation(self):
+        #TODO fix this after Model Overflow Problem is fixed
+        self.deviation_cds.data = dict(
+            time=[],
+            x_deviation=[],
+            y_deviation=[],
+            z_deviation=[]
+        )
             
     def start_beamforming(self):
         if self.beamforming_thread is None:
