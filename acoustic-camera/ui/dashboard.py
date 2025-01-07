@@ -2,7 +2,7 @@ import threading
 import numpy as np
 import datetime
 from bokeh.layouts import column, layout, row
-from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource #type:ignore
+from bokeh.models import Div, CheckboxGroup, RadioButtonGroup, TextInput, Button, ColumnDataSource, Spacer #type:ignore
 from bokeh.plotting import curdoc, figure
 from .plotting import AcousticCameraPlot
 
@@ -147,6 +147,10 @@ class Dashboard:
         # Setting up the callbacks
         self.setup_callbacks()
         
+        if self.method == 1:
+            self.deviation_plot.visible = False
+            self.acoustic_camera_plot.second_view.visible = False
+        
     def update_test_data(self):
             if len(self.x_vals) > 100:
                 self.x_vals = self.x_vals[1:]
@@ -175,7 +179,7 @@ class Dashboard:
                     height: 100%;
                     width: {self.config.get('layout.sidebar.width')}px;
                     background-color: {self.config.get('ui.sidebar_color')};
-                    padding: 0px;
+                    padding: 20px;
                     box-sizing: border-box;
                     overflow: hidden;
                 }}
@@ -194,7 +198,7 @@ class Dashboard:
             </div>
             """
             
-        content_layout_style = f"""
+        content_layout_style_second = f"""
             <div style="
                 position: fixed; 
                 top: {self.config.get('layout.sidebar.y')}px; 
@@ -205,7 +209,8 @@ class Dashboard:
                 box-sizing: border-box;">
             </div>
             """
-       
+            
+        sidebar_spacer = Spacer(width=self.config.get('layout.sidebar.width')-self.config.get('layout.sidebar.content_width'))
         # Header "Acoustic Camera"
         header = Div(text=f"<h2 style='color:{self.config.get('ui.font_color')}; font-family:{self.config.get('ui.font')}; '>Acoustic Camera</h2>") #margin-left: 20px
         
@@ -239,10 +244,7 @@ class Dashboard:
                 self.f_input,
                 self.threshold_input,
                 self.microphone_checkboxes,
-                self.measurement_button,
-                self.coordinates_display,
-                self.level_display,
-                self.overflow_status
+                self.measurement_button
             )
             self.model_params_column.visible = False
             self.overflow_status.visible = False
@@ -263,9 +265,7 @@ class Dashboard:
                 self.f_input,
                 self.threshold_input,
                 self.microphone_checkboxes,
-                self.measurement_button,
-                self.coordinates_display,
-                self.level_display
+                self.measurement_button
             )
             self.microphone_checkboxes.on_change("active", self.toggle_visibility)
             self.save_time_data.on_change('active', self.toggle_save)
@@ -284,22 +284,33 @@ class Dashboard:
             content_layout = column(
                 Div(text=f"{content_layout_style}"),
                 self.acoustic_camera_plot.fig,
-                self.deviation_plot,
+                self.coordinates_display,
+                self.level_display,
+                self.overflow_status
             )
         
-        else:
+        elif self.processor.dev is not None:
             content_layout = column(
                 Div(text=f"{content_layout_style}"),
                 self.acoustic_camera_plot.fig,
+                self.coordinates_display,
+                self.level_display
+            )
+            
+        else:
+            content_layout = column(
+                Div(text=f"{content_layout_style}"),
+                self.acoustic_camera_plot.fig
             )
             
         second_layout = column(
-            Div(text=f"{content_layout_style}"),
+            Div(text=f"{content_layout_style_second}"),
             self.acoustic_camera_plot.second_view,
+            self.deviation_plot
         )
         
         self.dashboard_layout = layout(
-            row(sidebar, content_layout, second_layout),
+            row(sidebar, sidebar_spacer, content_layout, second_layout),
             background=self.config.get("ui.background"),
             sizing_mode="scale_height"
         )
@@ -503,6 +514,13 @@ class Dashboard:
         self.deviation_plot.line(x='time', y='z_deviation', source=self.deviation_cds, color="black", legend_label="Z Deviation")
         self.deviation_plot.background_fill_color = self.config.get("ui.background_color")
         self.deviation_plot.border_fill_color = self.config.get("ui.background_color")
+        
+        self.deviation_plot.xaxis.visible = self.config.get('layout.deviation.axis') 
+        self.deviation_plot.yaxis.visible = self.config.get('layout.deviation.axis') 
+
+        if not self.config.get('layout.deviation.grid'):
+            self.deviation_plot.xgrid.grid_line_color = None
+            self.deviation_plot.ygrid.grid_line_color = None
         
     def _get_result_filenames(self):
         """ Get the filenames for the results

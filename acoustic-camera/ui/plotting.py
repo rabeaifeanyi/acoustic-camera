@@ -218,11 +218,12 @@ class AcousticCameraPlot:
         
         fig.add_layout(self.arrow_y)
         
-        fig.xaxis.visible = False 
-        fig.yaxis.visible = False 
+        fig.xaxis.visible = self.config.get('layout.plot.axis') 
+        fig.yaxis.visible = self.config.get('layout.plot.axis') 
 
-        #fig.xgrid.grid_line_color = None
-        #fig.ygrid.grid_line_color = None
+        if not self.config.get('layout.plot.grid'):
+            fig.xgrid.grid_line_color = None
+            fig.ygrid.grid_line_color = None
         
         fig.background_fill_alpha = 0
         fig.border_fill_alpha = 0
@@ -239,6 +240,14 @@ class AcousticCameraPlot:
             y_range=(0.0, 2.5),
             output_backend='webgl'
         )
+        
+        second_view.xaxis.visible = self.config.get('layout.second_plot.axis') 
+        second_view.yaxis.visible = self.config.get('layout.second_plot.axis') 
+
+        if not self.config.get('layout.second_plot.grid'):
+            second_view.xgrid.grid_line_color = None
+            second_view.ygrid.grid_line_color = None
+        
         return second_view
         
     def _create_plot(self):
