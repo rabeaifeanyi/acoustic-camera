@@ -233,12 +233,15 @@ class AcousticCameraPlot:
     
     def _create_base_second_view(self):
         second_view = figure(
+            title="View from top",
             tools="",
             width=self.config.get("layout.second_plot.width"),
             height=self.config.get("layout.second_plot.height"),
             x_range=(self.xmin, self.xmax), 
             y_range=(0.0, 2.5),
-            output_backend='webgl'
+            output_backend='webgl',
+            x_axis_label='x distance [m]',
+            y_axis_label='z distance [m]'
         )
         
         second_view.xaxis.visible = self.config.get('layout.second_plot.axis') 
