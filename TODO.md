@@ -5,6 +5,7 @@
 - [ ] Reset Deviation Plot properly
 - [ ] Better Beamforming Plot Method
 - [ ] Finish pure bokeh App
+- [ ] Lite RT for faster Model
 
 ## Documentation
 
