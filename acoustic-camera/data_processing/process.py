@@ -21,8 +21,8 @@ ac.config.global_caching = "none" #type: ignore
 
 
 class Processor:
-    def __init__(self, config, device_index, micgeom_path, results_folder, ckpt_path=None, model_on=False, z=1.5,
-                 csm_block_size=256, csm_min_queue_size=60, csm_buffer_size=1000):
+    def __init__(self, config, device_index, micgeom_path, results_folder, ckpt_path=None, model_on=False, z=2.0,
+                 csm_block_size=256, csm_min_queue_size=256, csm_buffer_size=1000):
         """ Processor for the UMA16 Acoustic Camera
         """
         self.config = config
@@ -202,7 +202,7 @@ class Processor:
             print("No model has been loaded. Model Option will not be availiable.")
         else:
             # Real Fast Fourier Transform
-            self.fft = ac.RFFT(source=self.sample_splitter, block_size=self.csm_block_size)
+            self.fft = ac.RFFT(source=self.sample_splitter, block_size=256)#self.csm_block_size)
             
             # Cross Power Spectra -> CSM
             self.csm_gen = ac.CrossPowerSpectra(source=self.fft)
@@ -276,41 +276,46 @@ class Processor:
             self.csm_queue.put(data)
             
     def _predictor(self):
-        """ Prediction thread for the model
-        """
+        """Prediction thread for the model."""
         while not self.model_stop_event.is_set():
             csm_list = []
 
+            # Warte, bis genügend Daten in der Queue sind
             if self.csm_queue.qsize() < self.min_queue_size:
                 time.sleep(0.1)
-                continue   
-                
-            try:
-                data = self.csm_queue.get(timeout=0.1)
-                csm_list.append(data)
-                
-            except queue.Empty:
                 continue
-                
-            # Calculate the mean of the CSM data
+
+            # Hole mehrere Blöcke aus der Queue
+            while not self.csm_queue.empty():# and len(csm_list) < 10:  # Batchgröße von 10
+                try:
+                    data = self.csm_queue.get_nowait()  # Hole Daten ohne zu blockieren
+                    csm_list.append(data)
+                except queue.Empty:
+                    break
+
+            print(f"CSM list size: {len(csm_list)}")
+            print("new Result!")
+
+            # Berechne den Durchschnitt der gesammelten Blöcke
             csm_mean = np.mean(csm_list, axis=0)
-            
+
             # Preprocess the CSM data
             eigmode, csm_norm = self._preprocess_csm(csm_mean)
-            
+
             # Predict the strength and location
             strength_pred, loc_pred, noise_pred = self.model.predict(eigmode, verbose=0)
             strength_pred = strength_pred.squeeze()
-      
+
+            # Weitere Verarbeitung der Ergebnisse
             strength_pred *= np.real(csm_norm)
             strength_pred = ac.L_p(strength_pred)
             loc_pred = loc_pred.squeeze()
-     
-            loc_pred *= np.array([1.0, 1.0, 0.5])[:,np.newaxis] # norm_loc in config.toml
-            loc_pred -= np.array([0.0, 0.0, -1.5])[:,np.newaxis] # shift_loc in config.toml
-            
+
+            loc_pred *= np.array([1.0, 1.0, 0.5])[:, np.newaxis]
+            loc_pred -= np.array([0.0, 0.0, -1.5])[:, np.newaxis]
             loc_pred[0] = -loc_pred[0]
 
+            # Ergebnisse speichern
             with self.result_lock:
                 self.results = {
                     'x': loc_pred[0].tolist(),
@@ -320,6 +325,7 @@ class Processor:
                 }
 
             self._save_results()
+
 
     def _preprocess_csm(self, data):
         """ Preprocess the CSM data
@@ -436,7 +442,7 @@ class Processor:
         while not self.beamforming_stop_event.is_set():
             try:
                 res = ac.L_p(next(gen))
-                res = res.reshape(self.grid_dim)
+                res = res.reshape(self.grid_dim)[:,::-1]
                 count += 1
                 with self.beamforming_result_lock:
                     self.beamforming_results['results'] = res 
@@ -471,7 +477,6 @@ class Processor:
     def update_z(self, z):
         self.z = z
         self.beamforming_grid = ac.RectGrid(x_min=self.x_min, x_max=self.x_max, y_min=self.y_min, y_max=self.y_max, z=z, increment=self.increment)
-
         
     def update_frequency(self, frequency):
         """ Update the target frequency for the model

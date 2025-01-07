@@ -91,6 +91,12 @@ class Dashboard:
                     active=self.method,
                     width=inside_width
                 )  # 0 is "Deep Learning" as default
+                
+                self.deviation_switch = RadioButtonGroup(
+                    labels=["Show Deviation", "Don't Show"], 
+                    active=self.method,
+                    width=inside_width
+                )
 
             # Switch for saving the data
             self.save_time_data = RadioButtonGroup(
@@ -226,6 +232,7 @@ class Dashboard:
             self.csm_block_size_input,
             self.min_queue_size_input,
             self.cluster_distance_input,
+            self.deviation_switch
         )
         
         if self.model_on and self.processor.dev is not None:
@@ -250,6 +257,7 @@ class Dashboard:
             self.method_selector.on_change('active', self.toggle_method)
             self.save_time_data.on_change('active', self.toggle_save)
             self.cluster_results.on_change('active', self.toggle_cluster)
+            self.deviation_switch.on_change('active', self.toggle_deviation)
             
         elif self.processor.dev is not None:
             self.sidebar_section = column(
@@ -365,7 +373,6 @@ class Dashboard:
             self.model_params_column.visible = True
             self.overflow_status.visible = True
             self.acoustic_camera_plot.second_view.visible = True
-            self.deviation_plot.visible = True
         
         elif new == 1:
             print("Wechsel zu Beamforming")
@@ -380,6 +387,13 @@ class Dashboard:
     def toggle_cluster(self, attr, old, new):
         """Callback for the cluster results selector"""
         self.acoustic_camera_plot.cluster = new
+        
+    def toggle_deviation(self, attr, old, new):
+        """Callback for the cluster results selector"""
+        if new:
+            self.deviation_plot.visible = False
+        else:
+            self.deviation_plot.visible = True
         
     def toggle_save(self, attr, old, new):
         """Callback for the cluster results selector"""
