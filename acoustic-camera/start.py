@@ -4,6 +4,8 @@ import time
 import signal
 import webbrowser
 from config import ConfigManager
+import argparse
+import bokeh.server.server
 
 
 CONFIG_PATH = "config/config.json"
@@ -12,13 +14,19 @@ config = ConfigManager(CONFIG_PATH)
 flask_process = None
 bokeh_process = None
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--model", type=str, help="Path to an explicit checkpoint (.keras)")
+parser.add_argument("--no-flask", action="store_true", help="Start only the Bokeh app without Flask")
+
+args, unknown = parser.parse_known_args()
+
 
 def start_flask():
     """
     Starts the Flask server as a sub-process.
     """
     global flask_process
-    flask_process = subprocess.Popen([sys.executable, "skripts/flask_app.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    flask_process = subprocess.Popen([sys.executable, "scripts/flask_app.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print("Flask server started at http://127.0.0.1:5000.")
 
 
@@ -27,13 +35,19 @@ def start_bokeh():
     Starts the Bokeh app as a sub-process.
     """
     global bokeh_process
-    bokeh_process = subprocess.Popen(
-        [sys.executable, "-m", "bokeh", "serve", "--allow-websocket-origin=127.0.0.1:5000", "skripts/bokeh_app.py"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    
+    if args.model:
+        bokeh_process = subprocess.Popen(
+            [sys.executable, "-m", "bokeh", "serve", "--allow-websocket-origin=127.0.0.1:5000", "scripts/bokeh_app.py",
+            "--args", "--model", args.model]
+        )
+    else:
+        bokeh_process = subprocess.Popen(
+            [sys.executable, "-m", "bokeh", "serve", "--allow-websocket-origin=127.0.0.1:5000", "scripts/bokeh_app.py", "--args"],
+        )
+        
     print("Bokeh app started at http://127.0.0.1:5006.")
-
+    
 
 def stop_processes():
     """
@@ -69,23 +83,36 @@ def handle_exit(signal_received, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, handle_exit)
     signal.signal(signal.SIGTERM, handle_exit)
-
-    try:
-        print("Starting Flask and Bokeh...")
-        start_bokeh()
-
-        time.sleep(2)
-
-        start_flask()
-
-        print("Both services are running. Press Ctrl+C to exit.")
+    
+    if args.no_flask:
         
-        time.sleep(2)
-        webbrowser.open("http://127.0.0.1:5000")
+       subprocess.run([
+                sys.executable, "-m", "bokeh", "serve",
+                "scripts/bokeh_app.py",
+                "--args", "--model", args.model
+            ])
+       
+       webbrowser.open("http://127.0.0.1:5006")
         
-        while True:
-            time.sleep(1)
-    except Exception as e:
-        print(f"Error: {e}")
-        stop_processes()
-        sys.exit(1)
+    else:
+
+        try:
+            print("Starting Flask and Bokeh...")
+            start_bokeh()
+
+            time.sleep(2)
+
+            start_flask()
+
+            print("Both services are running. Press Ctrl+C to exit.")
+            
+            time.sleep(2)
+            webbrowser.open("http://127.0.0.1:5000")
+            
+            while True:
+                time.sleep(1)
+                
+        except Exception as e:
+            print(f"Error: {e}")
+            stop_processes()
+            sys.exit(1)
