@@ -24,16 +24,19 @@ Here is a brief overview of the project structure:
 - Flask (optional)
 
 ## Environment
-run `conda create -n acoustic_camera python=3.11`.
-run `conda activate acoustic_camera`.
-run `pip install -r requirements.txt`.
+
+1. Create a new environment: <br> `conda create -n acoustic_camera python=3.11`
+
+2. Activate the environment: <br> `conda activate acoustic_camera`
+
+3. Install the required libraries: <br> `pip install -r requirements.txt`
 
 ## Usage
 
-To run the acoustic camera, clone this repository. Navigate into folder `acoustic-camera`.
+- Clone this repository and navigate into the `acoustic-camera` folder.
 
-To run in default, run `python start.py`.
+- To run with default settings, use: `python start.py`.
 
-To run without the flask underlay, use flag `--no-flask`.
+- To run without video output, use the `--no-flask` flag.
 
-To run with a specified model, use flag `--model path-to-folder-with-model`.
+- To use a specific model, add the flag `--model path/to/model/folder`.
