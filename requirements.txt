@@ -1,0 +1,10 @@
+acoular==25.03
+bokeh==3.5.2
+opencv-python
+flask==3.1.0
+h5py==3.11.0
+numpy==1.26.4
+sounddevice==0.5.0
+scipy==1.14.0
+tensorflow==2.18.0
+traits==6.4.3

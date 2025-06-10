@@ -79,7 +79,7 @@
     },
     "model": {
         "name": "EigmodeTransformer_learning_rate0.00025_weight_decay1e-06_epochs500_2024-10-22_10-33",
-        "base_directory": "/home/rabea/Documents/Bachelorarbeit/models",
+        "base_directory": "/models/",
         "config_file": "config.toml",
         "checkpoint": {
             "directory": "ckpt/best_ckpt",
