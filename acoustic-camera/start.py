@@ -45,9 +45,6 @@ def start_bokeh():
         bokeh_process = subprocess.Popen(
             [sys.executable, "-m", "bokeh", "serve", "--allow-websocket-origin=127.0.0.1:5000", "scripts/bokeh_app.py", "--args"],
         )
-        
-    print("Bokeh app started at http://127.0.0.1:5006.")
-    
 
 def stop_processes():
     """
@@ -85,14 +82,22 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, handle_exit)
     
     if args.no_flask:
+        if args.model:
         
-       subprocess.run([
-                sys.executable, "-m", "bokeh", "serve",
-                "scripts/bokeh_app.py",
-                "--args", "--model", args.model
-            ])
-       
-       webbrowser.open("http://127.0.0.1:5006")
+            subprocess.run([
+                        sys.executable, "-m", "bokeh", "serve",
+                        "scripts/bokeh_app.py",
+                        "--args", "--model", args.model
+                    ])
+            
+        else:
+            
+            subprocess.run([
+                        sys.executable, "-m", "bokeh", "serve",
+                        "scripts/bokeh_app.py"
+                    ])
+            
+        webbrowser.open("http://localhost:5006/bokeh_app")
         
     else:
 
