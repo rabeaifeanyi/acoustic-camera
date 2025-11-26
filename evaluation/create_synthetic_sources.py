@@ -46,7 +46,7 @@ for group, num in multi_source_ids_a.values():
     p2 = ac.PointSource(signal=n2, mics=mics, loc=(coords["x_2"], coords["y_2"], coords["z_2"]))
     
     
-    h5savefile = Path(f'/home/rabea/Documents/Bachelorarbeit/Messungen/M{group:02}/M{group:02}_{num:02}/M{group:02}_{num:02}_speaker_and_smartphone/signal_10_synthetic_reverb.h5')
+    h5savefile = Path(f'Messungen/M{group:02}/M{group:02}_{num:02}/M{group:02}_{num:02}_speaker_and_smartphone/signal_10_synthetic_reverb.h5')
     
     p = ac.Mixer(source=p1, sources=[p2])
     wh5 = ac.WriteH5(source=p, file=h5savefile)

@@ -34,7 +34,7 @@ for group, nums in interesting.items():
         dev = 1
         
         if group == 7:
-            signal_path = "/home/rabea/Documents/Bachelorarbeit/Messungen/M07/M07_03/M07_03_smartphone/signal_10.h5"
+            signal_path = "Messungen/M07/M07_03/M07_03_smartphone/signal_10.h5"
             dev = 2
         
         print(signal_path)

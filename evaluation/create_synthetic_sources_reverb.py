@@ -16,9 +16,7 @@ import tensorflow as tf
 from helper_funcs import get_true_coordinates, get_id
 from config import *
 
-ckpt_path = "/home/rabea/Documents/Bachelorarbeit/models/EigmodeTransformer_Reverb/ckpt/best_ckpt/0478-1.68.keras"
-
-#ckpt_path = "/home/rabea/Documents/Bachelorarbeit/models/EigmodeTransformer_Anechoic/ckpt/best_ckpt/0400-1.17.keras"
+# ckpt_path is defined in config.py
 
 
 model = tf.keras.models.load_model(

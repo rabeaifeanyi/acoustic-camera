@@ -8,9 +8,8 @@ from config import *
 CONFIG_PATH = "config/config.json"
 config = ConfigManager(CONFIG_PATH)
 
-model_dir = "/home/rabea/Documents/Bachelorarbeit/models/EigmodeTransformer_learning_rate0.00025_epochs100_2024-10-09_09-03"
-model_config_path = model_dir + "/config.toml"
-ckpt_path = model_dir + '/ckpt/best_ckpt/0078-1.06.keras'
+model_dir = "models/EigmodeTransformer_learning_rate0.00025_epochs100_2024-10-09_09-03"
+ckpt_path = Path(model_dir) / 'ckpt' / 'best_ckpt'
 results_folder = 'results'
  
 ac.config.global_caching = 'none' # type: ignore

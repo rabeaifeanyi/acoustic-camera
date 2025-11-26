@@ -70,16 +70,16 @@ multi_source_ids = {
 
 
 # empty rooms
-room_folder = "/home/rabea/Documents/Bachelorarbeit/Messungen/M00/M00_01"
-room_path = "/home/rabea/Documents/Bachelorarbeit/Messungen/M00/M00_01/2024-10-25_18-56-26_model_time_data.h5"
+room_folder = "Messungen/M00/M00_01"
+room_path = "Messungen/M00/M00_01/2024-10-25_18-56-26_model_time_data.h5"
 
-a_folder = "/home/rabea/Documents/Bachelorarbeit/Messungen/M13/M13_01"
-a_path = "/home/rabea/Documents/Bachelorarbeit/Messungen/M13/M13_01/2024-10-25_17-55-44_model_time_data.h5"
+a_folder = "Messungen/M13/M13_01"
+a_path = "Messungen/M13/M13_01/2024-10-25_17-55-44_model_time_data.h5"
 
-voice_folder = "/home/rabea/Documents/Bachelorarbeit/Messungen/M13/M13_14"
-voice_path = "/home/rabea/Documents/Bachelorarbeit/Messungen/M13/M13_14/2024-10-28_19-42-00_model_time_data.h5"
+voice_folder = "Messungen/M13/M13_14"
+voice_path = "Messungen/M13/M13_14/2024-10-28_19-42-00_model_time_data.h5"
 
-another_folder = "/home/rabea/Documents/Bachelorarbeit/Messungen/M13/M13_05"
-another = "/home/rabea/Documents/Bachelorarbeit/Messungen/M13/M13_05/2024-10-28_18-58-03_model_time_data.h5"
+another_folder = "Messungen/M13/M13_05"
+another = "Messungen/M13/M13_05/2024-10-28_18-58-03_model_time_data.h5"
 
 save_shorter_signal(another_folder, start_time=1, length=10, name=f"signal_10.h5", samples_path=another)

@@ -30,7 +30,7 @@ import scipy.io.wavfile as wav #type:ignore
 from temperature import *
 
 
-def get_true_coordinates(group, num, file_path="/home/rabea/Documents/Bachelorarbeit/Messungen.ods"):
+def get_true_coordinates(group, num, file_path="Messungen.ods"):
     """
     Retrieves the true coordinates of devices for a specific experiment setup.
 

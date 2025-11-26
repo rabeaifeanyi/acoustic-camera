@@ -38,14 +38,15 @@ if MODEL == "Reverb":
 else:
     model_name = "EigmodeTransformer_Anechoic" #Anechoic
 
-model_dir = Path(f"/home/rabea/Documents/Bachelorarbeit/models/{model_name}")
+model_dir = Path(f"models/{model_name}")
 config_path = model_dir / 'config.toml'  # Configuration file of model (not used here directly)
 ckpt_path = model_dir / 'ckpt' / 'best_ckpt'
 
 # Find the latest checkpoint model file
-ckpt_files = ckpt_path.glob('*.keras')
-ckpt_name = sorted(ckpt_files, key=lambda x: int(x.stem.split('-')[0]))[-1].name
-ckpt_path = model_dir / 'ckpt' / 'best_ckpt' / ckpt_name  # Full path to best checkpoint
+ckpt_files = list(ckpt_path.glob('*.keras'))
+if ckpt_files:
+    ckpt_name = sorted(ckpt_files, key=lambda x: int(x.stem.split('-')[0]))[-1].name
+    ckpt_path = model_dir / 'ckpt' / 'best_ckpt' / ckpt_name  # Full path to best checkpoint
 
 
 # -----------------------------------------------------------------------------------------------------------

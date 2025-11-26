@@ -1,5 +1,7 @@
 # Acoustic Camera
 
+**Note:** This Bachelor project is an unmaintained test implementation. For a great Python-based acoustic camera, please use **[Spectacoular](https://github.com/acoular/spectacoular)** instead, which is developed by the makers of Acoular.
+
 This project aims to create an acoustic camera that can visualize sound sources in a room.
 
 ## Overview
